@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+</head>
+<body>
+  <h2>Lot Size Journal</h2>
+
+  <form method="POST">
+    <label>Pair:</label><input type="text" name="pair" required><br>
+    <label>Direction:</label>
+    <select name="direction">
+      <option value="Buy">Buy</option>
+      <option value="Sell">Sell</option>
+    </select><br>
+    <label>Entry Price:</label><input type="number" step="0.0001" name="entry_price" required><br>
+    <label>Stop Loss:</label><input type="number" step="0.0001" name="stop_loss" required><br>
+    <label>Take Profit:</label><input type="number" step="0.0001" name="take_profit" required><br>
+    <label>Risk Amount:</label><input type="number" step="0.01" name="risk_amount" required><br>
+    <label>Expected Profit:</label><input type="number" step="0.01" name="expected_profit" required><br>
+    <label>Result:</label><input type="text" name="result"><br>
+    <label>Observation:</label><textarea name="observation"></textarea><br><br>
+    <button type="submit">Save to Journal</button>
+  </form>
+
+  <hr>
+
+  <h3>Your Journal Entries</h3>
+  <table border="1">
+    <tr>
+      <th>Pair</th><th>Direction</th><th>Entry</th><th>SL</th><th>TP</th>
+      <th>Risk</th><th>Profit</th><th>Result</th><th>Observation</th>
+    </tr>
+    {% for entry in entries %}
+    <tr>
+      <td>{{ entry.pair }}</td>
+      <td>{{ entry.direction }}</td>
+      <td>{{ entry.entry_price }}</td>
+      <td>{{ entry.stop_loss }}</td>
+      <td>{{ entry.take_profit }}</td>
+      <td>{{ entry.risk_amount }}</td>
+      <td>{{ entry.expected_profit }}</td>
+      <td>{{ entry.result or '' }}</td>
+      <td>{{ entry.observation or '' }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p><a href="/export_pdf">Export as PDF</a> | <a href="/logout">Logout</a></p>
+</body>
+</html>

@@ -1,175 +1,108 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
-import datetime
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
-import json
-from werkzeug.utils import secure_filename
 from fpdf import FPDF
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "static/uploads"
-os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+app.secret_key = 'your_secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-JOURNAL_FILE = "journal_entries.json"
+db = SQLAlchemy(app)
 
-# Load journal
-if os.path.exists(JOURNAL_FILE):
-    with open(JOURNAL_FILE, "r") as file:
-        journal_entries = json.load(file)
-else:
-    journal_entries = []
+# --- Models ---
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    expected_profit = ""
-    lot_size = ""
+class JournalEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    pair = db.Column(db.String(50))
+    direction = db.Column(db.String(10))
+    entry_price = db.Column(db.Float)
+    stop_loss = db.Column(db.Float)
+    take_profit = db.Column(db.Float)
+    risk_amount = db.Column(db.Float)
+    expected_profit = db.Column(db.Float)
 
-    if request.method == "POST":
-        # Form values
-        pair_type = request.form.get("pair_type", "")
-        symbol = request.form.get("symbol", "")
-        direction = request.form.get("direction", "")
-        entry = request.form.get("entry", "")
-        stop_loss = request.form.get("stop_loss", "")
-        take_profit = request.form.get("take_profit", "")
-        risk_amount = request.form.get("risk_amount", "")
-        expected_profit = request.form.get("expected_profit", "")
+# --- Routes ---
+@app.route('/')
+def home():
+    return redirect(url_for('login'))
 
-        save_trade = request.form.get("save_trade")
-        decision = request.form.get("decision", "")
-        result = request.form.get("result", "")
-        observation = request.form.get("observation", "")
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = generate_password_hash(request.form['password'])
+        if User.query.filter_by(username=username).first():
+            return 'User already exists'
+        user = User(username=username, password=password)
+        db.session.add(user)
+        db.session.commit()
+        return redirect(url_for('login'))
+    return render_template('signup.html')
 
-        # Uploads
-        chart_image = request.files.get("chart_image")
-        post_chart = request.files.get("post_chart")
-        chart_image_filename = ""
-        post_chart_filename = ""
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form['username']).first()
+        if user and check_password_hash(user.password, request.form['password']):
+            session['user_id'] = user.id
+            return redirect(url_for('dashboard'))
+        return 'Invalid credentials'
+    return render_template('login.html')
 
-        if chart_image and chart_image.filename:
-            filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_") + secure_filename(chart_image.filename)
-            chart_image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            chart_image_filename = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    return redirect(url_for('login'))
 
-        if post_chart and post_chart.filename:
-            filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_") + secure_filename(post_chart.filename)
-            post_chart.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-            post_chart_filename = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+@app.route('/dashboard', methods=['GET', 'POST'])
+def dashboard():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
-        # Lot size & expected profit
-        try:
-            if entry and stop_loss and risk_amount:
-                entry = float(entry)
-                stop_loss = float(stop_loss)
-                risk_amount = float(risk_amount)
+    if request.method == 'POST':
+        entry = JournalEntry(
+            user_id=session['user_id'],
+            pair=request.form['pair'],
+            direction=request.form['direction'],
+            entry_price=request.form['entry_price'],
+            stop_loss=request.form['stop_loss'],
+            take_profit=request.form['take_profit'],
+            risk_amount=request.form['risk_amount'],
+            expected_profit=request.form['expected_profit']
+        )
+        db.session.add(entry)
+        db.session.commit()
 
-                pip_multiplier = 0.01 if "JPY" in symbol.upper() else 0.0001
-                sl_pips = abs(entry - stop_loss) / pip_multiplier
-                if sl_pips > 0:
-                    lot_size = round(risk_amount / (sl_pips * 10), 2)
+    entries = JournalEntry.query.filter_by(user_id=session['user_id']).all()
+    return render_template('dashboard.html', entries=entries)
 
-                if take_profit:
-                    take_profit = float(take_profit)
-                    tp_pips = abs(take_profit - entry) / pip_multiplier
-                    expected_profit = round(lot_size * tp_pips * 10, 2)
-        except Exception:
-            lot_size = "Error"
-            expected_profit = ""
-
-        if save_trade:
-            journal_entries.append({
-                "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
-                "pair_type": pair_type,
-                "symbol": symbol,
-                "direction": direction,
-                "entry": entry,
-                "stop_loss": stop_loss,
-                "take_profit": take_profit,
-                "risk_amount": risk_amount,
-                "expected_profit": expected_profit,
-                "chart_link": chart_image_filename,
-                "decision": decision,
-                "result": result,
-                "post_chart": post_chart_filename,
-                "observation": observation
-            })
-            with open(JOURNAL_FILE, "w") as file:
-                json.dump(journal_entries, file, indent=4)
-
-        return render_template("index.html", lot_size=lot_size, expected_profit=expected_profit, journal_entries=journal_entries, filter_option="All")
-
-    # GET: filter logic
-    filter_option = request.args.get("filter", "All")
-    if filter_option == "Complete":
-        filtered_entries = [e for e in journal_entries if e.get("result")]
-    elif filter_option == "Incomplete":
-        filtered_entries = [e for e in journal_entries if not e.get("result")]
-    else:
-        filtered_entries = journal_entries
-
-    return render_template("index.html", lot_size=None, expected_profit=None, journal_entries=filtered_entries, filter_option=filter_option)
-
-@app.route("/delete/<int:index>")
-def delete(index):
-    if 0 <= index < len(journal_entries):
-        journal_entries.pop(index)
-        with open(JOURNAL_FILE, "w") as file:
-            json.dump(journal_entries, file, indent=4)
-    return redirect(url_for("index"))
-
-@app.route("/edit/<int:index>", methods=["GET", "POST"])
-def edit(index):
-    if index >= len(journal_entries):
-        return redirect(url_for("index"))
-
-    entry = journal_entries[index]
-
-    if request.method == "POST":
-        result = request.form.get("result", "")
-        observation = request.form.get("observation", "")
-        post_chart = request.files.get("post_chart")
-
-        if post_chart and post_chart.filename:
-            filename = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_") + secure_filename(post_chart.filename)
-            path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-            post_chart.save(path)
-            entry["post_chart"] = path
-
-        entry["result"] = result
-        entry["observation"] = observation
-
-        with open(JOURNAL_FILE, "w") as file:
-            json.dump(journal_entries, file, indent=4)
-
-        return redirect(url_for("index"))
-
-    return render_template("edit.html", entry=entry, index=index)
-
-@app.route("/export/pdf")
+@app.route('/export')
 def export_pdf():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    entries = JournalEntry.query.filter_by(user_id=session['user_id']).all()
     pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     pdf.set_font("Arial", size=12)
 
-    pdf.cell(200, 10, txt="Trade Journal Export", ln=True, align='C')
-    pdf.ln(10)
-
-    for entry in journal_entries:
-        pdf.set_font("Arial", style="B", size=11)
-        pdf.cell(0, 10, f"{entry['date']} | {entry['symbol']} | {entry['direction']}", ln=True)
-
-        pdf.set_font("Arial", size=10)
-        pdf.multi_cell(0, 8,
-            f"Entry: {entry['entry']} | SL: {entry['stop_loss']} | TP: {entry['take_profit']}\n"
-            f"Risk: {entry['risk_amount']} | Expected Profit: {entry['expected_profit']}\n"
-            f"Result: {entry.get('result', 'N/A')}\n"
-            f"Notes: {entry.get('observation', '')}"
-        )
-        pdf.ln(5)
+    for entry in entries:
+        line = f"{entry.pair} | {entry.direction} | Entry: {entry.entry_price} | SL: {entry.stop_loss} | TP: {entry.take_profit} | Risk: {entry.risk_amount} | Profit: {entry.expected_profit}"
+        pdf.cell(200, 10, txt=line, ln=True)
 
     filename = "journal_export.pdf"
     pdf.output(filename)
     return send_file(filename, as_attachment=True)
 
-if __name__ == "__main__":
-    app.run()
+# --- Run App ---
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
