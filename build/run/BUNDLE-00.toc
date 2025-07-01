@@ -1,0 +1,3 @@
+([('run',
+   '/Users/jonabautista/PycharmProjects/PythonProject/dist/run',
+   'EXECUTABLE')],)

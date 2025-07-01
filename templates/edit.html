@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Journal Entry</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    textarea, select, input {
+      padding: 8px;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      border: none;
+    }
+
+    a {
+      display: block;
+      margin-top: 20px;
+      text-align: center;
+      color: #555;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Edit Journal Entry</h2>
+
+<form method="POST">
+  <label for="decision_making">Decision Making:</label>
+  <textarea name="decision_making" rows="4" required>{{ entry.decision_making }}</textarea>
+
+  <label for="result">Result:</label>
+  <select name="result" required>
+    <option value="Win" {% if entry.result == 'Win' %}selected{% endif %}>Win</option>
+    <option value="Lose" {% if entry.result == 'Lose' %}selected{% endif %}>Lose</option>
+  </select>
+
+  <label for="observation">Observation:</label>
+  <textarea name="observation" rows="4">{{ entry.observation }}</textarea>
+
+  <button type="submit">Save Changes</button>
+</form>
+
+<a href="{{ url_for('index') }}">← Back to Journal</a>
+
+</body>
+</html>

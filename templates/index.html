@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lot Size Calculator & Journal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1, h2 {
+            margin: 0 0 20px 0;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+        }
+
+        .column {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        input[type="text"], input[type="number"], input[type="file"],
+        select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #0077cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .lot-size-output {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #0077cc;
+            margin-top: 10px;
+        }
+
+        .toolbar {
+            margin-bottom: 20px;
+        }
+
+        .toolbar form {
+            display: inline-block;
+        }
+
+        .toolbar select, .toolbar a {
+            margin-right: 10px;
+        }
+
+        .journal-card {
+            border: 1px solid #ddd;
+            border-left: 6px solid #0077cc;
+            border-radius: 8px;
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .journal-card.incomplete {
+            border-left-color: orange;
+        }
+
+        .journal-header {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            color: white;
+        }
+
+        .badge.Win { background: #28a745; }
+        .badge.Lose { background: #dc3545; }
+
+        .journal-body label {
+            font-weight: 600;
+        }
+
+        .journal-body p {
+            margin: 4px 0 10px;
+        }
+
+        .journal-footer a {
+            font-size: 0.9em;
+            color: #0077cc;
+            margin-right: 10px;
+        }
+
+        img {
+            margin-top: 6px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Lot Size Calculator + Trade Journal</h1>
+<div class="container">
+    <div class="column">
+        <h2>Calculator</h2>
+        <form method="post" enctype="multipart/form-data">
+            <label>Instrument</label>
+            <select name="pair_type">
+                <option value="Forex" {% if request.form.get('pair_type') == 'Forex' %}selected{% endif %}>Forex</option>
+                <option value="Crypto" {% if request.form.get('pair_type') == 'Crypto' %}selected{% endif %}>Crypto</option>
+                <option value="Commodities" {% if request.form.get('pair_type') == 'Commodities' %}selected{% endif %}>Commodities</option>
+                <option value="Indices" {% if request.form.get('pair_type') == 'Indices' %}selected{% endif %}>Indices</option>
+            </select>
+
+            <label>Pair</label>
+            <input type="text" name="symbol" value="{{ request.form.get('symbol', '') }}">
+
+            <label>Direction</label>
+            <select name="direction">
+                <option value="Buy" {% if request.form.get('direction') == 'Buy' %}selected{% endif %}>Buy</option>
+                <option value="Sell" {% if request.form.get('direction') == 'Sell' %}selected{% endif %}>Sell</option>
+            </select>
+
+            <label>Entry Price</label>
+            <input type="number" step="any" name="entry" value="{{ request.form.get('entry', '') }}">
+
+            <label>Stop Loss</label>
+            <input type="number" step="any" name="stop_loss" value="{{ request.form.get('stop_loss', '') }}">
+
+            <label>Take Profit</label>
+            <input type="number" step="any" name="take_profit" value="{{ request.form.get('take_profit', '') }}">
+
+            <label>Risk Amount</label>
+            <input type="number" step="any" name="risk_amount" value="{{ request.form.get('risk_amount', '') }}">
+
+            <label>Expected Profit (auto-filled)</label>
+            <input type="number" step="any" name="expected_profit" value="{{ expected_profit or '' }}" readonly>
+
+            <button type="submit">Calculate</button>
+
+            {% if lot_size is not none %}
+            <div class="lot-size-output">Lot Size: {{ lot_size }}</div>
+            {% endif %}
+
+            <hr>
+            <h3>Journal</h3>
+
+            <label>Pre-Trade Chart Image</label>
+            <input type="file" name="chart_image">
+
+            <label>Decision Making</label>
+            <textarea name="decision">{{ request.form.get('decision', '') }}</textarea>
+
+            <label>Result</label>
+            <select name="result">
+                <option value="">--</option>
+                <option value="Win" {% if request.form.get('result') == 'Win' %}selected{% endif %}>Win</option>
+                <option value="Lose" {% if request.form.get('result') == 'Lose' %}selected{% endif %}>Lose</option>
+            </select>
+
+            <label>Post-Trade Chart Image</label>
+            <input type="file" name="post_chart">
+
+            <label>Observation</label>
+            <textarea name="observation">{{ request.form.get('observation', '') }}</textarea>
+
+            <label>
+                <input type="checkbox" name="save_trade" {% if request.form.get('save_trade') %}checked{% endif %}>
+                Save to Journal
+            </label>
+        </form>
+    </div>
+
+    <div class="column">
+        <h2>Trade Journal</h2>
+
+        <div class="toolbar">
+            <form method="get" action="{{ url_for('index') }}">
+                <select name="filter" onchange="this.form.submit()">
+                    <option value="All" {% if filter_option == 'All' %}selected{% endif %}>Show All</option>
+                    <option value="Complete" {% if filter_option == 'Complete' %}selected{% endif %}>Complete</option>
+                    <option value="Incomplete" {% if filter_option == 'Incomplete' %}selected{% endif %}>Incomplete</option>
+                </select>
+            </form>
+            <a href="{{ url_for('export_pdf') }}">
+                <button>Export to PDF</button>
+            </a>
+        </div>
+
+        {% for entry in journal_entries %}
+        <div class="journal-card {% if not entry.result %}incomplete{% endif %}">
+            <div class="journal-header">
+                {{ entry.date }} — {{ entry.symbol }}
+                {% if entry.result %}
+                <span class="badge {{ entry.result }}">{{ entry.result }}</span>
+                {% else %}
+                <span class="badge" style="background: orange;">Pending</span>
+                {% endif %}
+            </div>
+            <div class="journal-body">
+                <label>Direction:</label> <p>{{ entry.direction }}</p>
+                <label>Entry:</label> <p>{{ entry.entry }}</p>
+                <label>SL / TP:</label> <p>{{ entry.stop_loss }} / {{ entry.take_profit }}</p>
+                <label>Risk:</label> <p>{{ entry.risk_amount }}</p>
+                <label>Expected Profit:</label> <p>{{ entry.expected_profit }}</p>
+
+                {% if entry.chart_link %}
+                <label>Pre-Trade Chart:</label><br>
+                <img src="{{ url_for('static', filename=entry.chart_link.split('static/')[-1]) }}" width="200"><br>
+                {% endif %}
+
+                {% if entry.post_chart %}
+                <label>Post-Trade Chart:</label><br>
+                <img src="{{ url_for('static', filename=entry.post_chart.split('static/')[-1]) }}" width="200"><br>
+                {% endif %}
+
+                {% if entry.decision %}
+                <label>Decision:</label> <p>{{ entry.decision }}</p>
+                {% endif %}
+
+                {% if entry.observation %}
+                <label>Observation:</label> <p>{{ entry.observation }}</p>
+                {% endif %}
+            </div>
+            <div class="journal-footer">
+                <a href="{{ url_for('edit', index=loop.index0) }}">Edit</a>
+                <a href="{{ url_for('delete', index=loop.index0) }}">Delete</a>
+            </div>
+        </div>
+        {% else %}
+        <p>No trades recorded yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>
