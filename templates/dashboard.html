@@ -1,52 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <title>Lot Size Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h2>Lot Size Journal</h2>
+<body class="bg-gray-100 text-gray-800">
+    <div class="max-w-4xl mx-auto py-10 px-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold">📘 Lot Size Journal</h1>
+            <div class="space-x-3">
+                <a href="{{ url_for('export_pdf') }}" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Export PDF</a>
+                <a href="{{ url_for('logout') }}" class="text-red-600 hover:underline">Logout</a>
+                <button onclick="toggleDarkMode()" class="ml-2">🌙</button>
+            </div>
+        </div>
 
-  <form method="POST">
-    <label>Pair:</label><input type="text" name="pair" required><br>
-    <label>Direction:</label>
-    <select name="direction">
-      <option value="Buy">Buy</option>
-      <option value="Sell">Sell</option>
-    </select><br>
-    <label>Entry Price:</label><input type="number" step="0.0001" name="entry_price" required><br>
-    <label>Stop Loss:</label><input type="number" step="0.0001" name="stop_loss" required><br>
-    <label>Take Profit:</label><input type="number" step="0.0001" name="take_profit" required><br>
-    <label>Risk Amount:</label><input type="number" step="0.01" name="risk_amount" required><br>
-    <label>Expected Profit:</label><input type="number" step="0.01" name="expected_profit" required><br>
-    <label>Result:</label><input type="text" name="result"><br>
-    <label>Observation:</label><textarea name="observation"></textarea><br><br>
-    <button type="submit">Save to Journal</button>
-  </form>
+        <!-- Form -->
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-6 rounded shadow">
+            <input name="pair" placeholder="Pair" required class="col-span-1 border px-3 py-2 rounded">
+            <select name="direction" class="col-span-1 border px-3 py-2 rounded">
+                <option value="BUY">BUY</option>
+                <option value="SELL">SELL</option>
+            </select>
+            <input name="entry_price" type="number" step="0.00001" placeholder="Entry Price" required class="col-span-1 border px-3 py-2 rounded">
+            <input name="stop_loss" type="number" step="0.00001" placeholder="Stop Loss" required class="col-span-1 border px-3 py-2 rounded">
+            <input name="take_profit" type="number" step="0.00001" placeholder="Take Profit" required class="col-span-1 border px-3 py-2 rounded">
+            <input name="risk_amount" type="number" placeholder="Risk Amount" required class="col-span-1 border px-3 py-2 rounded">
+            <input name="expected_profit" type="number" step="0.01" placeholder="Expected Profit" readonly class="col-span-1 border px-3 py-2 rounded bg-gray-100 text-gray-600">
+            <select name="result" class="col-span-1 border px-3 py-2 rounded">
+                <option value="">Result</option>
+                <option value="Win">Win</option>
+                <option value="Lose">Lose</option>
+            </select>
+            <textarea name="observation" placeholder="Observation" rows="2" class="col-span-full border px-3 py-2 rounded"></textarea>
+            <button type="submit" class="col-span-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Save</button>
+        </form>
 
-  <hr>
+        <!-- Lot Size Result -->
+        {% if lot_size %}
+        <div class="mt-4 bg-blue-50 text-blue-800 border border-blue-300 px-4 py-3 rounded">
+            <strong>Calculated Lot Size:</strong> {{ lot_size }}
+        </div>
+        {% endif %}
 
-  <h3>Your Journal Entries</h3>
-  <table border="1">
-    <tr>
-      <th>Pair</th><th>Direction</th><th>Entry</th><th>SL</th><th>TP</th>
-      <th>Risk</th><th>Profit</th><th>Result</th><th>Observation</th>
-    </tr>
-    {% for entry in entries %}
-    <tr>
-      <td>{{ entry.pair }}</td>
-      <td>{{ entry.direction }}</td>
-      <td>{{ entry.entry_price }}</td>
-      <td>{{ entry.stop_loss }}</td>
-      <td>{{ entry.take_profit }}</td>
-      <td>{{ entry.risk_amount }}</td>
-      <td>{{ entry.expected_profit }}</td>
-      <td>{{ entry.result or '' }}</td>
-      <td>{{ entry.observation or '' }}</td>
-    </tr>
-    {% endfor %}
-  </table>
+        <!-- Filters -->
+        <div class="mt-6 flex justify-between items-center">
+            <label for="filter" class="font-semibold">Filter Journal:</label>
+            <form method="GET">
+                <select name="filter" onchange="this.form.submit()" class="border px-3 py-2 rounded">
+                    <option value="All" {% if current_filter == 'All' %}selected{% endif %}>All</option>
+                    <option value="Complete" {% if current_filter == 'Complete' %}selected{% endif %}>Complete</option>
+                    <option value="Incomplete" {% if current_filter == 'Incomplete' %}selected{% endif %}>Incomplete</option>
+                </select>
+            </form>
+        </div>
 
-  <p><a href="/export_pdf">Export as PDF</a> | <a href="/logout">Logout</a></p>
+        <!-- Table -->
+        <table class="w-full mt-4 text-sm border rounded shadow bg-white">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="py-2 px-3">Pair</th>
+                    <th class="py-2 px-3">Direction</th>
+                    <th class="py-2 px-3">Entry</th>
+                    <th class="py-2 px-3">SL</th>
+                    <th class="py-2 px-3">TP</th>
+                    <th class="py-2 px-3">Risk</th>
+                    <th class="py-2 px-3">Expected</th>
+                    <th class="py-2 px-3">Result</th>
+                    <th class="py-2 px-3">Observation</th>
+                    <th class="py-2 px-3">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr class="border-t">
+                    <td class="py-2 px-3">{{ entry.pair }}</td>
+                    <td class="py-2 px-3">{{ entry.direction }}</td>
+                    <td class="py-2 px-3">{{ entry.entry_price }}</td>
+                    <td class="py-2 px-3">{{ entry.stop_loss }}</td>
+                    <td class="py-2 px-3">{{ entry.take_profit }}</td>
+                    <td class="py-2 px-3">{{ entry.risk_amount }}</td>
+                    <td class="py-2 px-3">{{ entry.expected_profit }}</td>
+                    <td class="py-2 px-3">{{ entry.result or '-' }}</td>
+                    <td class="py-2 px-3">{{ entry.observation or '-' }}</td>
+                    <td class="py-2 px-3 text-center">
+                        <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" class="text-blue-600 hover:underline mr-2">Edit</a>
+                        <a href="{{ url_for('delete_entry', entry_id=entry.id) }}" class="text-red-600 hover:underline">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function toggleDarkMode() {
+            document.body.classList.toggle("bg-gray-900");
+            document.body.classList.toggle("text-white");
+        }
+    </script>
 </body>
 </html>

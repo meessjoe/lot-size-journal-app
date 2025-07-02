@@ -3,19 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h2>Login</h2>
-  <form method="POST">
-    <label>Username:</label><br>
-    <input type="text" name="username" required><br><br>
-
-    <label>Password:</label><br>
-    <input type="password" name="password" required><br><br>
-
-    <button type="submit">Log In</button>
-  </form>
-
-  <p>Don't have an account? <a href="/signup">Sign up here</a></p>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <h2 class="text-2xl font-bold mb-4 text-center">Log In</h2>
+    <form method="POST">
+      <input name="username" placeholder="Username" required class="w-full p-2 border rounded mb-3" />
+      <input type="password" name="password" placeholder="Password" required class="w-full p-2 border rounded mb-4" />
+      <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+    </form>
+    <p class="mt-4 text-center text-sm">Don't have an account?
+      <a href="{{ url_for('signup') }}" class="text-blue-600 hover:underline">Sign up</a>
+    </p>
+  </div>
 </body>
 </html>

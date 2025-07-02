@@ -1,81 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Edit Journal Entry</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 600px;
-      margin: 40px auto;
-      padding: 20px;
-      border: 1px solid #ccc;
-    }
-
-    h2 {
-      text-align: center;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-    }
-
-    label {
-      margin-top: 15px;
-      font-weight: bold;
-    }
-
-    textarea, select, input {
-      padding: 8px;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #007bff;
-      color: white;
-      border: none;
-    }
-
-    a {
-      display: block;
-      margin-top: 20px;
-      text-align: center;
-      color: #555;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Edit Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-900 text-white min-h-screen px-4 py-8">
 
-<h2>Edit Journal Entry</h2>
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6">✏️ Edit Journal Entry</h1>
 
-<form method="POST">
-  <label for="decision_making">Decision Making:</label>
-  <textarea name="decision_making" rows="4" required>{{ entry.decision_making }}</textarea>
-
-  <label for="result">Result:</label>
-  <select name="result" required>
-    <option value="Win" {% if entry.result == 'Win' %}selected{% endif %}>Win</option>
-    <option value="Lose" {% if entry.result == 'Lose' %}selected{% endif %}>Lose</option>
-  </select>
-
-  <label for="observation">Observation:</label>
-  <textarea name="observation" rows="4">{{ entry.observation }}</textarea>
-
-  <button type="submit">Save Changes</button>
-</form>
-
-<a href="{{ url_for('index') }}">← Back to Journal</a>
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <input type="text" name="pair" value="{{ entry.pair }}" placeholder="Pair" required class="p-2 rounded text-black">
+            <select name="direction" required class="p-2 rounded text-black">
+                <option value="BUY" {% if entry.direction == 'BUY' %}selected{% endif %}>BUY</option>
+                <option value="SELL" {% if entry.direction == 'SELL' %}selected{% endif %}>SELL</option>
+            </select>
+            <input type="number" step="0.00001" name="entry_price" value="{{ entry.entry_price }}" placeholder="Entry Price" required class="p-2 rounded text-black">
+            <input type="number" step="0.00001" name="stop_loss" value="{{ entry.stop_loss }}" placeholder="Stop Loss" required class="p-2 rounded text-black">
+            <input type="number" step="0.00001" name="take_profit" value="{{ entry.take_profit }}" placeholder="Take Profit" required class="p-2 rounded text-black">
+            <input type="number" step="0.01" name="risk_amount" value="{{ entry.risk_amount }}" placeholder="Risk Amount" required class="p-2 rounded text-black">
+            <input type="number" step="0.01" name="expected_profit" value="{{ entry.expected_profit }}" placeholder="Expected Profit" required class="p-2 rounded text-black">
+            <select name="result" class="p-2 rounded text-black">
+                <option value="" {% if not entry.result %}selected{% endif %}>Result</option>
+                <option value="Win" {% if entry.result == 'Win' %}selected{% endif %}>Win</option>
+                <option value="Lose" {% if entry.result == 'Lose' %}selected{% endif %}>Lose</option>
+            </select>
+            <textarea name="observation" placeholder="Observation (optional)" rows="3" class="p-2 rounded text-black md:col-span-2">{{ entry.observation }}</textarea>
+            <div class="md:col-span-2 flex justify-between">
+                <a href="{{ url_for('index') }}" class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">Cancel</a>
+                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded">Save Changes</button>
+            </div>
+        </form>
+    </div>
 
 </body>
 </html>
