@@ -6,140 +6,136 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold mb-6 text-center">Lot Size Calculator + Trade Journal</h1>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Calculator Section -->
-        <div class="bg-white p-6 rounded shadow">
-            <h2 class="text-xl font-semibold mb-4">Calculator</h2>
-            <form action="/" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <div>
-                    <label class="block font-semibold">Instrument</label>
-                    <select name="instrument" class="w-full border p-2 rounded">
-                        <option value="Forex">Forex</option>
-                        <option value="Crypto">Crypto</option>
-                        <option value="Commodities">Commodities</option>
-                        <option value="Indices">Indices</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-semibold">Pair</label>
-                    <input type="text" name="pair" class="w-full border p-2 rounded" required>
-                </div>
-                <div>
-                    <label class="block font-semibold">Direction</label>
-                    <select name="direction" class="w-full border p-2 rounded">
-                        <option value="Buy">Buy</option>
-                        <option value="Sell">Sell</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-semibold">Entry Price</label>
-                    <input type="number" step="any" name="entry_price" class="w-full border p-2 rounded" required>
-                </div>
-                <div>
-                    <label class="block font-semibold">Stop Loss</label>
-                    <input type="number" step="any" name="stop_loss" class="w-full border p-2 rounded" required>
-                </div>
-                <div>
-                    <label class="block font-semibold">Take Profit</label>
-                    <input type="number" step="any" name="take_profit" class="w-full border p-2 rounded" required>
-                </div>
-                <div>
-                    <label class="block font-semibold">Risk Amount</label>
-                    <input type="number" step="any" name="risk_amount" class="w-full border p-2 rounded" required>
-                </div>
-                <div>
-                    <label class="block font-semibold">Expected Profit (auto-filled)</label>
-                    <input type="number" step="any" name="expected_profit" class="w-full border p-2 rounded" readonly value="{{ expected_profit }}">
-                </div>
-                <div>
-                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Calculate</button>
-                </div>
-            </form>
+    <div class="max-w-7xl mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">Lot Size Calculator + Trade Journal</h1>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Calculator Form -->
+            <div class="bg-white shadow-md rounded p-6">
+                <h2 class="text-xl font-semibold mb-4">Calculator</h2>
+                <form action="/calculate" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <div>
+                        <label>Instrument</label>
+                        <select name="instrument" class="w-full p-2 border rounded">
+                            <option value="Forex">Forex</option>
+                            <option value="Crypto">Crypto</option>
+                            <option value="Commodities">Commodities</option>
+                            <option value="Indices">Indices</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Pair</label>
+                        <input type="text" name="pair" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Direction</label>
+                        <select name="direction" class="w-full p-2 border rounded">
+                            <option value="Buy">Buy</option>
+                            <option value="Sell">Sell</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Entry Price</label>
+                        <input type="number" step="any" name="entry" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Stop Loss</label>
+                        <input type="number" step="any" name="stop_loss" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Take Profit</label>
+                        <input type="number" step="any" name="take_profit" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Risk Amount</label>
+                        <input type="number" step="any" name="risk_amount" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Expected Profit (auto-filled)</label>
+                        <input type="number" step="any" name="expected_profit" class="w-full p-2 border rounded" readonly>
+                    </div>
 
-            <hr class="my-6">
+                    <!-- Optional Journal Fields -->
+                    <h3 class="text-lg font-semibold mt-4">Journal</h3>
+                    <div>
+                        <label>Pre-Trade Chart Image</label>
+                        <input type="file" name="pre_trade_chart" class="w-full p-2 border rounded">
+                    </div>
+                    <div>
+                        <label>Decision Making</label>
+                        <textarea name="decision" class="w-full p-2 border rounded"></textarea>
+                    </div>
+                    <div>
+                        <label>Result</label>
+                        <select name="result" class="w-full p-2 border rounded">
+                            <option value="">--</option>
+                            <option value="Win">Win</option>
+                            <option value="Lose">Lose</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Post-Trade Chart Image</label>
+                        <input type="file" name="post_trade_chart" class="w-full p-2 border rounded">
+                    </div>
 
-            <h2 class="text-xl font-semibold mb-2">Journal</h2>
-            <form action="/save" method="POST" enctype="multipart/form-data" class="space-y-4">
-                <div>
-                    <label class="block font-semibold">Pre-Trade Chart Image</label>
-                    <input type="file" name="pre_chart">
-                </div>
-                <div>
-                    <label class="block font-semibold">Decision Making</label>
-                    <textarea name="decision" class="w-full border p-2 rounded" rows="3"></textarea>
-                </div>
-                <div>
-                    <label class="block font-semibold">Result</label>
-                    <select name="result" class="w-full border p-2 rounded">
-                        <option value="">--</option>
-                        <option value="Win">Win</option>
-                        <option value="Lose">Lose</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block font-semibold">Post-Trade Chart Image</label>
-                    <input type="file" name="post_chart">
-                </div>
-                <div>
-                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Save</button>
-                </div>
-            </form>
-        </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Calculate</button>
+                        <a href="/logout" class="text-sm text-blue-600 hover:underline mt-3">Logout</a>
+                    </div>
+                </form>
+            </div>
 
-        <!-- Journal Section -->
-        <div class="bg-white p-6 rounded shadow">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold">Trade Journal</h2>
-                <div>
-                    <form method="GET" action="/" class="inline">
-                        <select name="filter" onchange="this.form.submit()" class="border p-1 rounded">
-                            <option value="">All</option>
+            <!-- Trade Journal -->
+            <div class="bg-white shadow-md rounded p-6">
+                <h2 class="text-xl font-semibold mb-4">Trade Journal</h2>
+
+                <div class="flex justify-between items-center mb-4">
+                    <form method="get">
+                        <select name="filter" onchange="this.form.submit()" class="p-2 border rounded">
+                            <option value="all" {% if filter == 'all' %}selected{% endif %}>All</option>
                             <option value="complete" {% if filter == 'complete' %}selected{% endif %}>Complete</option>
                             <option value="incomplete" {% if filter == 'incomplete' %}selected{% endif %}>Incomplete</option>
                         </select>
                     </form>
-                    <a href="{{ url_for('export_pdf') }}" class="ml-2 bg-blue-500 text-white px-3 py-1 rounded">Export to PDF</a>
-                    <a href="{{ url_for('logout') }}" class="ml-2 text-red-600">Logout</a>
+                    <a href="/export_pdf" class="bg-green-500 text-white px-3 py-2 rounded hover:bg-green-600">Export to PDF</a>
                 </div>
-            </div>
-            {% for entry in entries %}
-                <div class="border rounded p-4 mb-4 {% if not entry.result %}bg-yellow-50{% else %}bg-green-50{% endif %}">
-                    <div class="flex justify-between items-center">
-                        <strong>{{ entry.timestamp.strftime('%Y-%m-%d %H:%M') }} — {{ entry.pair.upper() }}</strong>
-                        <span class="text-sm text-white px-2 py-1 rounded {% if not entry.result %}bg-yellow-500{% elif entry.result == 'Win' %}bg-green-600{% else %}bg-red-500{% endif %}">
-                            {{ entry.result if entry.result else 'Pending' }}
-                        </span>
+
+                {% for entry in journal %}
+                <div class="border-l-4 {% if entry.result %}border-green-500{% else %}border-yellow-500{% endif %} bg-gray-50 p-4 mb-4 shadow-sm">
+                    <div class="text-sm text-gray-600">{{ entry.date }} — <span class="font-bold">{{ entry.pair }}</span>
+                        {% if not entry.result %}<span class="text-yellow-600 font-semibold">Pending</span>{% endif %}
                     </div>
-                    <p class="text-sm mt-1">Direction: {{ entry.direction }}</p>
-                    <p class="text-sm">Entry: {{ entry.entry_price }}</p>
-                    <p class="text-sm">SL / TP: {{ entry.stop_loss }} / {{ entry.take_profit }}</p>
-                    <p class="text-sm">Risk: {{ entry.risk_amount }}</p>
-                    <p class="text-sm">Expected Profit: {{ entry.expected_profit }}</p>
-                    {% if entry.pre_chart %}
-                        <div class="mt-2">
-                            <p class="font-semibold text-sm">Pre-Trade Chart:</p>
-                            <img src="{{ url_for('static', filename='uploads/' + entry.pre_chart) }}" class="max-w-full h-auto rounded shadow">
-                        </div>
+                    <div class="text-sm">Direction: {{ entry.direction }}</div>
+                    <div class="text-sm">Entry: {{ entry.entry }}</div>
+                    <div class="text-sm">SL / TP: {{ entry.stop_loss }} / {{ entry.take_profit }}</div>
+                    <div class="text-sm">Risk: {{ entry.risk_amount }}</div>
+                    <div class="text-sm">Expected Profit: {{ entry.expected_profit }}</div>
+
+                    {% if entry.pre_trade_chart %}
+                    <div class="mt-2 text-sm">Pre-Trade Chart:</div>
+                    <img src="{{ url_for('static', filename='uploads/' + entry.pre_trade_chart) }}" alt="Pre Chart" class="w-full max-w-xs rounded mt-1">
                     {% endif %}
+
                     {% if entry.decision %}
-                        <p class="mt-2 text-sm"><strong>Decision:</strong> {{ entry.decision }}</p>
+                    <div class="text-sm mt-2"><span class="font-medium">Decision:</span> {{ entry.decision }}</div>
                     {% endif %}
-                    {% if entry.post_chart %}
-                        <div class="mt-2">
-                            <p class="font-semibold text-sm">Post-Trade Chart:</p>
-                            <img src="{{ url_for('static', filename='uploads/' + entry.post_chart) }}" class="max-w-full h-auto rounded shadow">
-                        </div>
+
+                    {% if entry.result %}
+                    <div class="text-sm mt-2"><span class="font-medium">Result:</span> {{ entry.result }}</div>
                     {% endif %}
-                    <div class="mt-2">
-                        <a href="{{ url_for('edit_entry', entry_id=entry.id) }}" class="text-blue-600 mr-2">Edit</a>
-                        <a href="{{ url_for('delete_entry', entry_id=entry.id) }}" class="text-red-600">Delete</a>
+
+                    {% if entry.post_trade_chart %}
+                    <div class="mt-2 text-sm">Post-Trade Chart:</div>
+                    <img src="{{ url_for('static', filename='uploads/' + entry.post_trade_chart) }}" alt="Post Chart" class="w-full max-w-xs rounded mt-1">
+                    {% endif %}
+
+                    <div class="mt-2 flex gap-3">
+                        <a href="{{ url_for('edit_entry', index=loop.index0) }}" class="text-blue-600 text-sm hover:underline">Edit</a>
+                        <a href="{{ url_for('delete_entry', index=loop.index0) }}" class="text-red-600 text-sm hover:underline">Delete</a>
                     </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>

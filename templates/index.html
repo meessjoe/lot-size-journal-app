@@ -2,17 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Welcome</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Lot Size App</title>
+    <script>
+        window.onload = function() {
+            window.location.href = "/dashboard";
+        };
+    </script>
 </head>
-<body class="bg-gray-50 text-gray-800 flex items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded shadow-md text-center w-full max-w-md">
-        <h1 class="text-3xl font-bold mb-4">Welcome to Lot Size Journal</h1>
-        <p class="mb-6">Track your trades and calculate lot size accurately.</p>
-        <a href="{{ url_for('dashboard') }}" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Go to Dashboard</a>
-        <p class="mt-4">
-            <a href="{{ url_for('logout') }}" class="text-red-500 hover:underline">Logout</a>
-        </p>
-    </div>
+<body>
+    <p>Redirecting to dashboard...</p>
 </body>
 </html>

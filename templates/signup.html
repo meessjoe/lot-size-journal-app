@@ -1,40 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Signup | Lot Size Journal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <title>Sign Up | Lot Size App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
-        <form action="{{ url_for('signup') }}" method="post" class="space-y-4">
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class="text-red-500 text-sm">
-                        {% for message in messages %}
-                            <p>{{ message }}</p>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <div>
-                <label class="block font-semibold mb-1">Username</label>
-                <input type="text" name="username" class="w-full border border-gray-300 p-2 rounded" required>
-            </div>
-            <div>
-                <label class="block font-semibold mb-1">Password</label>
-                <input type="password" name="password" class="w-full border border-gray-300 p-2 rounded" required>
-            </div>
-            <div>
-                <label class="block font-semibold mb-1">Confirm Password</label>
-                <input type="password" name="confirm_password" class="w-full border border-gray-300 p-2 rounded" required>
-            </div>
-            <div class="flex justify-between items-center">
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Sign Up</button>
-                <a href="{{ url_for('login') }}" class="text-sm text-blue-600 hover:underline">Back to Login</a>
-            </div>
-        </form>
-    </div>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 max-w-sm w-full">
+    <h2 class="text-2xl font-semibold text-center mb-6">Sign Up</h2>
+    <form method="post" action="/signup" class="space-y-4">
+      <div>
+        <label class="block text-gray-700 text-sm font-bold mb-2">Username</label>
+        <input type="text" name="username" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      <div>
+        <label class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+        <input type="password" name="password" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+      </div>
+      <div class="flex items-center justify-between">
+        <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+          Sign Up
+        </button>
+        <a class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800" href="/login">
+          Back to Login
+        </a>
+      </div>
+    </form>
+  </div>
 </body>
 </html>
