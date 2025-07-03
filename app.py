@@ -1,183 +1,182 @@
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from werkzeug.utils import secure_filename
+from fpdf import FPDF
 import os
 import json
-import datetime
-from fpdf import FPDF
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'
+app.secret_key = 'secret_key'
 
-# Set upload folder
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Constants
+USERS_FILE = 'users.json'
+UPLOAD_FOLDER = 'uploads'
+JOURNAL_FOLDER = 'journals'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(JOURNAL_FOLDER, exist_ok=True)
 
-# Journal file
-JOURNAL_FILE = 'journal_entries.json'
+# Helpers
+def load_users():
+    if os.path.exists(USERS_FILE):
+        with open(USERS_FILE, 'r') as f:
+            return json.load(f)
+    return {}
 
-# Load or initialize journal
-if os.path.exists(JOURNAL_FILE):
-    with open(JOURNAL_FILE, 'r') as f:
-        journal_entries = json.load(f)
-else:
-    journal_entries = {}
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f)
 
-# Dummy user database
-users = {"admin": "admin123", "user": "pass123"}
+def get_journal_file(username):
+    return os.path.join(JOURNAL_FOLDER, f'{username}_journal.json')
 
+def load_journal(username):
+    path = get_journal_file(username)
+    if os.path.exists(path):
+        with open(path, 'r') as f:
+            return json.load(f)
+    return []
+
+def save_journal(username, journal):
+    with open(get_journal_file(username), 'w') as f:
+        json.dump(journal, f, indent=2)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Routes
 @app.route('/')
-def home():
-    if 'username' in session:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
+def index():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    journal = load_journal(session['username'])
+    filter_type = request.args.get('filter')
+    if filter_type == 'complete':
+        journal = [j for j in journal if j.get('result')]
+    elif filter_type == 'incomplete':
+        journal = [j for j in journal if not j.get('result')]
+    return render_template('index.html', journal=journal)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        users = load_users()
         username = request.form['username']
         password = request.form['password']
         if username in users and users[username] == password:
             session['username'] = username
-            return redirect(url_for('dashboard'))
-        return "Invalid credentials"
+            return redirect(url_for('index'))
+        return render_template('login.html', error='Invalid credentials.')
     return render_template('login.html')
 
-@app.route('/signup', methods=['GET', 'POST'])
-def signup():
+@app.route('/register', methods=['GET', 'POST'])
+def register():
     if request.method == 'POST':
+        users = load_users()
         username = request.form['username']
         password = request.form['password']
         if username in users:
-            return "User already exists"
+            return render_template('register.html', error='Username already exists.')
         users[username] = password
+        save_users(users)
         return redirect(url_for('login'))
-    return render_template('signup.html')
+    return render_template('register.html')
 
 @app.route('/logout')
 def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
-@app.route('/dashboard', methods=['GET', 'POST'])
-def dashboard():
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    entry_price = float(request.form.get('entry_price', 0))
+    stop_loss = float(request.form.get('stop_loss', 0))
+    take_profit = float(request.form.get('take_profit', 0))
+    risk_amount = float(request.form.get('risk_amount', 0))
+
+    pip_difference = abs(entry_price - stop_loss)
+    pip_value = 10  # $10 per pip per standard lot
+    lot_size = risk_amount / (pip_difference * pip_value) if pip_difference else 0
+    expected_profit = abs(take_profit - entry_price) * pip_value * lot_size
+
+    return {
+        'lot_size': round(lot_size, 2),
+        'expected_profit': round(expected_profit, 2)
+    }
+
+@app.route('/save', methods=['POST'])
+def save():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['username']
-    user_entries = journal_entries.get(username, [])
-    filtered_entries = user_entries
+    data = dict(request.form)
+    data['date'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+    data['lot_size'] = request.form.get('lot_size')
+    data['expected_profit'] = request.form.get('expected_profit')
 
-    if request.method == 'POST':
-        instrument = request.form.get('instrument')
-        pair = request.form.get('pair')
-        direction = request.form.get('direction')
-        entry = request.form.get('entry')
-        stop_loss = request.form.get('stop_loss')
-        take_profit = request.form.get('take_profit')
-        risk = request.form.get('risk')
-        expected_profit = request.form.get('expected_profit')
-        decision = request.form.get('decision')
-        result = request.form.get('result')
-        date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    pre_image = request.files.get('pre_image')
+    post_image = request.files.get('post_image')
 
-        # Handle file uploads
-        pre_image = request.files.get('pre_image')
-        post_image = request.files.get('post_image')
-        pre_image_path = post_image_path = ""
+    if pre_image and allowed_file(pre_image.filename):
+        filename = secure_filename(pre_image.filename)
+        pre_path = os.path.join(UPLOAD_FOLDER, filename)
+        pre_image.save(pre_path)
+        data['pre_image'] = pre_path
 
-        if pre_image and pre_image.filename:
-            pre_filename = secure_filename(pre_image.filename)
-            pre_image_path = os.path.join(app.config['UPLOAD_FOLDER'], pre_filename)
-            pre_image.save(pre_image_path)
+    if post_image and allowed_file(post_image.filename):
+        filename = secure_filename(post_image.filename)
+        post_path = os.path.join(UPLOAD_FOLDER, filename)
+        post_image.save(post_path)
+        data['post_image'] = post_path
 
-        if post_image and post_image.filename:
-            post_filename = secure_filename(post_image.filename)
-            post_image_path = os.path.join(app.config['UPLOAD_FOLDER'], post_filename)
-            post_image.save(post_image_path)
+    journal = load_journal(session['username'])
+    journal.append(data)
+    save_journal(session['username'], journal)
 
-        entry_data = {
-            "date": date,
-            "instrument": instrument,
-            "pair": pair,
-            "direction": direction,
-            "entry": entry,
-            "stop_loss": stop_loss,
-            "take_profit": take_profit,
-            "risk": risk,
-            "expected_profit": expected_profit,
-            "pre_image": pre_image_path,
-            "decision": decision,
-            "result": result,
-            "post_image": post_image_path
-        }
+    return redirect(url_for('index'))
 
-        journal_entries.setdefault(username, []).insert(0, entry_data)
+@app.route('/edit/<int:index>', methods=['POST'])
+def edit(index):
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
-        with open(JOURNAL_FILE, 'w') as f:
-            json.dump(journal_entries, f)
+    journal = load_journal(session['username'])
+    if index >= len(journal):
+        return redirect(url_for('index'))
 
-        return redirect(url_for('dashboard'))
+    journal[index]['result'] = request.form.get('result')
+    journal[index]['observation'] = request.form.get('observation')
 
-    # Filter
-    filter_status = request.args.get('filter')
-    if filter_status == 'complete':
-        filtered_entries = [e for e in user_entries if e.get('result') in ['Win', 'Lose']]
-    elif filter_status == 'incomplete':
-        filtered_entries = [e for e in user_entries if not e.get('result') or e['result'] == '--']
+    post_image = request.files.get('post_image')
+    if post_image and allowed_file(post_image.filename):
+        filename = secure_filename(post_image.filename)
+        post_path = os.path.join(UPLOAD_FOLDER, filename)
+        post_image.save(post_path)
+        journal[index]['post_image'] = post_path
 
-    return render_template('dashboard.html', entries=filtered_entries)
-
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    entry = float(request.form.get('entry'))
-    stop_loss = float(request.form.get('stop_loss'))
-    take_profit = float(request.form.get('take_profit'))
-    risk = float(request.form.get('risk'))
-    direction = request.form.get('direction')
-    instrument = request.form.get('instrument')
-
-    pip_value = 10  # fixed pip value for 1 lot
-
-    if direction == 'Buy':
-        stop_diff = abs(entry - stop_loss)
-        tp_diff = abs(take_profit - entry)
-    else:
-        stop_diff = abs(stop_loss - entry)
-        tp_diff = abs(entry - take_profit)
-
-    lot_size = round(risk / (stop_diff * pip_value), 2) if stop_diff != 0 else 0
-    expected_profit = round(tp_diff * pip_value * lot_size, 2)
-
-    return {
-        'lot_size': lot_size,
-        'expected_profit': expected_profit
-    }
+    save_journal(session['username'], journal)
+    return redirect(url_for('index'))
 
 @app.route('/export_pdf')
 def export_pdf():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    username = session['username']
-    user_entries = journal_entries.get(username, [])
-
+    journal = load_journal(session['username'])
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="Lot Size Trade Journal", ln=True, align='C')
+    pdf.set_font("Arial", size=10)
 
-    for entry in user_entries:
-        pdf.ln(10)
-        pdf.cell(200, 10, txt=f"Date: {entry['date']} | Pair: {entry['pair']} | Direction: {entry['direction']}", ln=True)
-        pdf.cell(200, 10, txt=f"Entry: {entry['entry']} | SL: {entry['stop_loss']} | TP: {entry['take_profit']}", ln=True)
-        pdf.cell(200, 10, txt=f"Risk: {entry['risk']} | Expected Profit: {entry['expected_profit']} | Result: {entry['result']}", ln=True)
-        pdf.cell(200, 10, txt=f"Decision: {entry['decision']}", ln=True)
+    for entry in journal:
+        for k, v in entry.items():
+            if 'image' not in k:
+                pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
+        pdf.ln(5)
 
-    export_path = 'journal_export.pdf'
-    pdf.output(export_path)
-
-    return send_file(export_path, as_attachment=True)
+    filepath = os.path.join(UPLOAD_FOLDER, f"{session['username']}_journal.pdf")
+    pdf.output(filepath)
+    return send_file(filepath, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

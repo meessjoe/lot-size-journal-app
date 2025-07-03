@@ -1,15 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Lot Size App</title>
-    <script>
-        window.onload = function() {
-            window.location.href = "/dashboard";
-        };
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lot Size Calculator & Journal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <p>Redirecting to dashboard...</p>
+<body class="bg-gray-100 font-sans">
+  <div class="max-w-7xl mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Lot Size Calculator & Journal</h1>
+      <div>
+        <a href="/logout" class="text-red-600">Logout</a>
+      </div>
+    </div>
+
+    <form id="calc-form" method="POST" action="/save" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-md mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block">Instrument</label>
+          <select name="instrument" class="w-full border rounded px-2 py-1">
+            <option>Forex</option>
+            <option>Crypto</option>
+            <option>Commodities</option>
+            <option>Indices</option>
+          </select>
+        </div>
+        <div>
+          <label class="block">Pair</label>
+          <input type="text" name="pair" class="w-full border rounded px-2 py-1" />
+        </div>
+        <div>
+          <label class="block">Direction</label>
+          <select name="direction" class="w-full border rounded px-2 py-1">
+            <option>Buy</option>
+            <option>Sell</option>
+          </select>
+        </div>
+        <div>
+          <label class="block">Entry Price</label>
+          <input type="number" step="any" name="entry_price" class="w-full border rounded px-2 py-1" required />
+        </div>
+        <div>
+          <label class="block">Stop Loss</label>
+          <input type="number" step="any" name="stop_loss" class="w-full border rounded px-2 py-1" required />
+        </div>
+        <div>
+          <label class="block">Take Profit</label>
+          <input type="number" step="any" name="take_profit" class="w-full border rounded px-2 py-1" required />
+        </div>
+        <div>
+          <label class="block">Risk Amount ($)</label>
+          <input type="number" step="any" name="risk_amount" class="w-full border rounded px-2 py-1" required />
+        </div>
+        <div>
+          <label class="block">Lot Size</label>
+          <input type="text" name="lot_size" id="lot_size" readonly class="w-full bg-gray-100 border rounded px-2 py-1" />
+        </div>
+        <div>
+          <label class="block">Expected Profit</label>
+          <input type="text" name="expected_profit" id="expected_profit" readonly class="w-full bg-gray-100 border rounded px-2 py-1" />
+        </div>
+        <div>
+          <label class="block">Pre-Trade Chart Image</label>
+          <input type="file" name="pre_image" class="w-full" />
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save to Journal</button>
+      </div>
+    </form>
+
+    <div class="mb-4">
+      <a href="/export_pdf" class="bg-green-600 text-white px-4 py-2 rounded">Export to PDF</a>
+      <a href="/?filter=complete" class="ml-2 text-blue-600">View Completed</a>
+      <a href="/?filter=incomplete" class="ml-2 text-blue-600">View Incomplete</a>
+      <a href="/" class="ml-2 text-blue-600">View All</a>
+    </div>
+
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-200">
+          <tr>
+            <th class="px-4 py-2 text-left">Date</th>
+            <th class="px-4 py-2">Pair</th>
+            <th class="px-4 py-2">Direction</th>
+            <th class="px-4 py-2">Result</th>
+            <th class="px-4 py-2">Observation</th>
+            <th class="px-4 py-2">Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in journal %}
+            <tr class="border-t">
+              <td class="px-4 py-2">{{ entry.date }}</td>
+              <td class="px-4 py-2">{{ entry.pair }}</td>
+              <td class="px-4 py-2">{{ entry.direction }}</td>
+              <td class="px-4 py-2">{{ entry.result or '' }}</td>
+              <td class="px-4 py-2">{{ entry.observation or '' }}</td>
+              <td class="px-4 py-2">
+                <form method="POST" action="/edit/{{ loop.index0 }}" enctype="multipart/form-data">
+                  <select name="result" class="border px-1">
+                    <option {% if entry.result == 'Win' %}selected{% endif %}>Win</option>
+                    <option {% if entry.result == 'Lose' %}selected{% endif %}>Lose</option>
+                  </select>
+                  <input name="observation" type="text" placeholder="Observation" class="border px-2 py-1 rounded" />
+                  <input type="file" name="post_image" class="text-sm" />
+                  <button type="submit" class="ml-2 bg-yellow-500 text-white px-2 py-1 rounded">Update</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('calc-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const response = await fetch('/calculate', {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+
+      document.getElementById('lot_size').value = result.lot_size;
+      document.getElementById('expected_profit').value = result.expected_profit;
+
+      setTimeout(() => form.submit(), 100);
+    });
+  </script>
 </body>
 </html>
