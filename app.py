@@ -8,7 +8,6 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'secret_key'
 
-# Constants
 USERS_FILE = 'users.json'
 UPLOAD_FOLDER = 'uploads'
 JOURNAL_FOLDER = 'journals'
@@ -17,16 +16,23 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(JOURNAL_FOLDER, exist_ok=True)
 
-# Helpers
 def load_users():
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as f:
-            return json.load(f)
+    try:
+        if os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'r') as f:
+                return json.load(f)
+    except json.JSONDecodeError:
+        with open(USERS_FILE, 'w') as f:
+            f.write('{}')
     return {}
 
 def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f)
+    try:
+        with open(USERS_FILE, 'w') as f:
+            json.dump(users, f)
+    except Exception:
+        with open(USERS_FILE, 'w') as f:
+            f.write('{}')
 
 def get_journal_file(username):
     return os.path.join(JOURNAL_FOLDER, f'{username}_journal.json')
@@ -45,7 +51,6 @@ def save_journal(username, journal):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Routes
 @app.route('/')
 def index():
     if 'username' not in session:
@@ -96,7 +101,7 @@ def calculate():
     risk_amount = float(request.form.get('risk_amount', 0))
 
     pip_difference = abs(entry_price - stop_loss)
-    pip_value = 10  # $10 per pip per standard lot
+    pip_value = 10  # Fixed $10 per pip per standard lot
     lot_size = risk_amount / (pip_difference * pip_value) if pip_difference else 0
     expected_profit = abs(take_profit - entry_price) * pip_value * lot_size
 
@@ -112,18 +117,28 @@ def save():
 
     data = dict(request.form)
     data['date'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-    data['lot_size'] = request.form.get('lot_size')
-    data['expected_profit'] = request.form.get('expected_profit')
 
+    # Ensure new fields from the form are captured
+    data['instrument'] = request.form.get('instrument', '')
+    data['pair'] = request.form.get('pair', '')
+    data['direction'] = request.form.get('direction', '')
+    data['entry_price'] = request.form.get('entry_price', '')
+    data['stop_loss'] = request.form.get('stop_loss', '')
+    data['take_profit'] = request.form.get('take_profit', '')
+    data['risk_amount'] = request.form.get('risk_amount', '')
+    data['lot_size'] = request.form.get('lot_size', '')
+    data['expected_profit'] = request.form.get('expected_profit', '')
+
+    # Handle pre-trade image
     pre_image = request.files.get('pre_image')
-    post_image = request.files.get('post_image')
-
     if pre_image and allowed_file(pre_image.filename):
         filename = secure_filename(pre_image.filename)
         pre_path = os.path.join(UPLOAD_FOLDER, filename)
         pre_image.save(pre_path)
         data['pre_image'] = pre_path
 
+    # Handle post-trade image if uploaded at the start
+    post_image = request.files.get('post_image')
     if post_image and allowed_file(post_image.filename):
         filename = secure_filename(post_image.filename)
         post_path = os.path.join(UPLOAD_FOLDER, filename)
