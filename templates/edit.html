@@ -1,71 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Edit Entry | Lot Size App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-6 max-w-xl w-full">
-    <h2 class="text-2xl font-semibold mb-6 text-center">Edit Journal Entry</h2>
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
-      <div>
-        <label class="block mb-1 text-gray-700">Pair</label>
-        <input type="text" name="pair" value="{{ entry.pair }}" class="w-full p-2 border rounded" required>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Direction</label>
-        <select name="direction" class="w-full p-2 border rounded">
-          <option value="Buy" {% if entry.direction == 'Buy' %}selected{% endif %}>Buy</option>
-          <option value="Sell" {% if entry.direction == 'Sell' %}selected{% endif %}>Sell</option>
-        </select>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Entry Price</label>
-        <input type="number" step="any" name="entry" value="{{ entry.entry }}" class="w-full p-2 border rounded" required>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Stop Loss</label>
-        <input type="number" step="any" name="stop_loss" value="{{ entry.stop_loss }}" class="w-full p-2 border rounded" required>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Take Profit</label>
-        <input type="number" step="any" name="take_profit" value="{{ entry.take_profit }}" class="w-full p-2 border rounded" required>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Risk Amount</label>
-        <input type="number" step="any" name="risk" value="{{ entry.risk }}" class="w-full p-2 border rounded" required>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Expected Profit</label>
-        <input type="number" step="any" name="expected_profit" value="{{ entry.expected_profit }}" class="w-full p-2 border rounded">
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Decision Making</label>
-        <textarea name="decision" class="w-full p-2 border rounded">{{ entry.decision }}</textarea>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Result</label>
-        <select name="result" class="w-full p-2 border rounded">
-          <option value="">--</option>
-          <option value="Win" {% if entry.result == 'Win' %}selected{% endif %}>Win</option>
-          <option value="Lose" {% if entry.result == 'Lose' %}selected{% endif %}>Lose</option>
-        </select>
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Pre-Trade Chart Image</label>
-        <input type="file" name="pre_image" class="w-full p-2 border rounded">
-      </div>
-      <div>
-        <label class="block mb-1 text-gray-700">Post-Trade Chart Image</label>
-        <input type="file" name="post_image" class="w-full p-2 border rounded">
-      </div>
-
-      <div class="flex gap-4 mt-6">
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Changes</button>
-        <a href="/dashboard" class="text-sm text-gray-600 hover:underline mt-3">Cancel</a>
-      </div>
-    </form>
-  </div>
-</body>
-</html>
+{% extends "layout.html" %}
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-6 mt-12 shadow rounded">
+  <h2 class="text-xl font-bold mb-4">Edit Trade</h2>
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
+    <div>
+      <label class="block mb-1 font-medium">Result</label>
+      <select name="result" class="w-full border p-2 rounded">
+        <option value="Win">Win</option>
+        <option value="Lose">Lose</option>
+      </select>
+    </div>
+    <div>
+      <label class="block mb-1 font-medium">Post-Trade Chart Image</label>
+      <input type="file" name="post_image" class="w-full" />
+    </div>
+    <div>
+      <label class="block mb-1 font-medium">Observation</label>
+      <textarea name="observation" rows="3" class="w-full border p-2 rounded" placeholder="Add your notes here..."></textarea>
+    </div>
+    <button type="submit" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">Save</button>
+  </form>
+</div>
+{% endblock %}

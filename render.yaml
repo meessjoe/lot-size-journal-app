@@ -1,13 +1,7 @@
 services:
   - type: web
-    name: lot-size-journal-app
-    env: python
-    buildCommand: ""
-    startCommand: gunicorn app:app
-services:
-  - type: web
     name: lot-size-journal
     env: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app"
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
     plan: free

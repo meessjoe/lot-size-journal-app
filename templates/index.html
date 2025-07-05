@@ -1,162 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Lot Size Calculator & Journal</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100">
-  <div class="flex min-h-screen">
+{% extends "layout.html" %}
+{% block content %}
 
-    <!-- LEFT COLUMN: INPUT FORM -->
-    <div class="w-1/2 bg-white p-8 shadow-lg">
-      <h2 class="text-2xl font-bold mb-6">Lot Size Calculator</h2>
-      <form method="POST" enctype="multipart/form-data" class="space-y-4">
-
-        <!-- Instrument -->
-        <div>
-          <label class="block font-medium">Instrument</label>
-          <select name="instrument" class="w-full border px-3 py-2 rounded">
-            <option {% if form.instrument == 'Forex' %}selected{% endif %}>Forex</option>
-            <option {% if form.instrument == 'Crypto' %}selected{% endif %}>Crypto</option>
-            <option {% if form.instrument == 'Commodities' %}selected{% endif %}>Commodities</option>
-            <option {% if form.instrument == 'Indices' %}selected{% endif %}>Indices</option>
-          </select>
-        </div>
-
-        <!-- Pair -->
-        <div>
-          <label class="block font-medium">Pair</label>
-          <input type="text" name="pair" value="{{ form.pair or '' }}" class="w-full border px-3 py-2 rounded" />
-        </div>
-
-        <!-- Direction -->
-        <div>
-          <label class="block font-medium">Direction</label>
-          <select name="direction" class="w-full border px-3 py-2 rounded">
-            <option {% if form.direction == 'Buy' %}selected{% endif %}>Buy</option>
-            <option {% if form.direction == 'Sell' %}selected{% endif %}>Sell</option>
-          </select>
-        </div>
-
-        <!-- Entry / SL / TP / Risk -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block font-medium">Entry Price</label>
-            <input type="number" name="entry_price" step="any" value="{{ form.entry_price or '' }}" class="w-full border px-3 py-2 rounded" />
-          </div>
-          <div>
-            <label class="block font-medium">Stop Loss</label>
-            <input type="number" name="stop_loss" step="any" value="{{ form.stop_loss or '' }}" class="w-full border px-3 py-2 rounded" />
-          </div>
-          <div>
-            <label class="block font-medium">Take Profit</label>
-            <input type="number" name="take_profit" step="any" value="{{ form.take_profit or '' }}" class="w-full border px-3 py-2 rounded" />
-          </div>
-          <div>
-            <label class="block font-medium">Risk Amount ($)</label>
-            <input type="number" name="risk_amount" step="any" value="{{ form.risk_amount or '' }}" class="w-full border px-3 py-2 rounded" />
-          </div>
-        </div>
-
-        <!-- Lot Size & Expected Profit -->
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block font-medium">Lot Size</label>
-            <input type="text" name="lot_size" value="{{ form.lot_size or '' }}" readonly class="w-full border px-3 py-2 bg-gray-100 rounded" />
-          </div>
-          <div>
-            <label class="block font-medium">Expected Profit</label>
-            <input type="text" name="expected_profit" value="{{ form.expected_profit or '' }}" readonly class="w-full border px-3 py-2 bg-gray-100 rounded" />
-          </div>
-        </div>
-
-        <!-- Pre-Trade Chart Image -->
-        <div>
-          <label class="block font-medium">Pre-Trade Chart Image</label>
-          <input type="file" name="pre_image" class="w-full" />
-        </div>
-
-        <!-- Buttons -->
-        <div class="flex gap-4">
-          <button type="submit" formaction="/calculate" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
-            Calculate
-          </button>
-          <button type="submit" formaction="/save" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            Save to Journal
-          </button>
-        </div>
-      </form>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Calculator Section -->
+    <div class="bg-white p-6 rounded shadow">
+        <h2 class="text-xl font-semibold mb-4">Lot Size Calculator</h2>
+        <form action="/calculate" method="POST" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <input name="entry_price" type="number" step="any" value="{{ request.form.get('entry_price', '') }}" placeholder="Entry Price" class="input">
+                <input name="stop_loss" type="number" step="any" value="{{ request.form.get('stop_loss', '') }}" placeholder="Stop Loss" class="input">
+                <input name="take_profit" type="number" step="any" value="{{ request.form.get('take_profit', '') }}" placeholder="Take Profit" class="input">
+                <input name="risk_amount" type="number" step="any" value="{{ request.form.get('risk_amount', '') }}" placeholder="Risk Amount" class="input">
+            </div>
+            <div class="flex space-x-4">
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Calculate</button>
+                {% if lot_size %}
+                <form action="/save" method="POST">
+                    {% for field in ['entry_price', 'stop_loss', 'take_profit', 'risk_amount'] %}
+                        <input type="hidden" name="{{ field }}" value="{{ request.form.get(field) }}">
+                    {% endfor %}
+                    <input type="hidden" name="lot_size" value="{{ lot_size }}">
+                    <input type="hidden" name="expected_profit" value="{{ expected_profit }}">
+                    <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Save to Journal</button>
+                </form>
+                {% endif %}
+            </div>
+            {% if lot_size %}
+            <div class="mt-4 bg-gray-100 p-4 rounded">
+                <p><strong>Lot Size:</strong> {{ lot_size }}</p>
+                <p><strong>Expected Profit:</strong> {{ expected_profit }}</p>
+            </div>
+            {% endif %}
+        </form>
     </div>
 
-    <!-- RIGHT COLUMN: JOURNAL -->
-    <div class="w-1/2 p-8 overflow-y-scroll">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">Trade Journal</h2>
-        <div>
-          <a href="/?filter=incomplete" class="px-3 py-1 bg-yellow-300 rounded mr-2 text-sm">Incomplete</a>
-          <a href="/?filter=complete" class="px-3 py-1 bg-green-300 rounded text-sm">Complete</a>
+    <!-- Journal Section -->
+    <div>
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Trade Journal</h2>
+            <div>
+                <a href="{{ url_for('index') }}" class="text-sm text-blue-500 hover:underline mr-2">All</a>
+                <a href="{{ url_for('index', filter='complete') }}" class="text-sm text-green-500 hover:underline mr-2">Complete</a>
+                <a href="{{ url_for('index', filter='incomplete') }}" class="text-sm text-yellow-500 hover:underline">Incomplete</a>
+            </div>
         </div>
-      </div>
-
-      {% for trade in journal %}
-        {% set i = loop.index0 %}
-        <div class="mb-6 bg-white rounded shadow p-4">
-          <div class="flex justify-between text-sm text-gray-500">
-            <span>{{ trade.date }}</span>
-            <span class="font-semibold {% if trade.result %}text-green-600{% else %}text-yellow-600{% endif %}">
-              {% if trade.result %}Complete{% else %}Incomplete{% endif %}
-            </span>
-          </div>
-
-          <div class="mt-2 text-sm">
-            <p><strong>Instrument:</strong> {{ trade.instrument }}</p>
-            <p><strong>Pair:</strong> {{ trade.pair }}</p>
-            <p><strong>Direction:</strong> {{ trade.direction }}</p>
-            <p><strong>Entry:</strong> {{ trade.entry_price }} | <strong>SL:</strong> {{ trade.stop_loss }} | <strong>TP:</strong> {{ trade.take_profit }}</p>
-            <p><strong>Lot Size:</strong> {{ trade.lot_size }} | <strong>Expected Profit:</strong> ${{ trade.expected_profit }}</p>
-            {% if trade.pre_image %}
-              <div class="mt-2">
-                <strong>Pre-Trade Image:</strong><br />
-                <img src="{{ trade.pre_image }}" class="w-40 rounded shadow mt-1" />
-              </div>
-            {% endif %}
-          </div>
-
-          {% if not trade.result %}
-            <form method="POST" action="/edit/{{ i }}" enctype="multipart/form-data" class="mt-4 space-y-2">
-              <div>
-                <label class="block font-medium">Result</label>
-                <select name="result" class="w-full border px-3 py-2 rounded">
-                  <option>Win</option>
-                  <option>Lose</option>
-                </select>
-              </div>
-              <div>
-                <label class="block font-medium">Observation</label>
-                <textarea name="observation" class="w-full border px-3 py-2 rounded" rows="2"></textarea>
-              </div>
-              <div>
-                <label class="block font-medium">Post-Trade Image</label>
-                <input type="file" name="post_image" class="w-full" />
-              </div>
-              <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-                Complete Trade
-              </button>
-            </form>
-          {% else %}
-            {% if trade.result %}<p class="mt-2"><strong>Result:</strong> {{ trade.result }}</p>{% endif %}
-            {% if trade.observation %}<p><strong>Observation:</strong> {{ trade.observation }}</p>{% endif %}
-            {% if trade.post_image %}
-              <div class="mt-2">
-                <strong>Post-Trade Image:</strong><br />
-                <img src="{{ trade.post_image }}" class="w-40 rounded shadow mt-1" />
-              </div>
-            {% endif %}
-          {% endif %}
+        {% if journal %}
+        <div class="space-y-4">
+            {% for entry in journal %}
+            <div class="bg-white p-4 rounded shadow">
+                <p><strong>Date:</strong> {{ entry.date }}</p>
+                <p><strong>Entry:</strong> {{ entry.entry_price }}</p>
+                <p><strong>SL:</strong> {{ entry.stop_loss }}</p>
+                <p><strong>TP:</strong> {{ entry.take_profit }}</p>
+                <p><strong>Risk:</strong> {{ entry.risk_amount }}</p>
+                <p><strong>Lot:</strong> {{ entry.lot_size }}</p>
+                <p><strong>Profit:</strong> {{ entry.expected_profit }}</p>
+                {% if entry.result %}
+                <p><strong>Result:</strong> {{ entry.result }}</p>
+                {% endif %}
+                {% if entry.observation %}
+                <p><strong>Observation:</strong> {{ entry.observation }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
-      {% endfor %}
+        {% else %}
+        <p class="text-gray-500">No journal entries yet.</p>
+        {% endif %}
     </div>
-  </div>
-</body>
-</html>
+</div>
+
+<style>
+    .input {
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 0.375rem;
+        width: 100%;
+    }
+</style>
+
+{% endblock %}
