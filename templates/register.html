@@ -1,179 +1,30 @@
-from flask import Flask, render_template, request, redirect, url_for, session, send_file
-from werkzeug.utils import secure_filename
-from fpdf import FPDF
-import os
-import json
-from datetime import datetime
-
-app = Flask(__name__)
-app.secret_key = 'secret_key'
-
-USERS_FILE = 'users.json'
-UPLOAD_FOLDER = 'uploads'
-JOURNAL_FOLDER = 'journals'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(JOURNAL_FOLDER, exist_ok=True)
-
-def load_users():
-    if os.path.exists(USERS_FILE):
-        with open(USERS_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f)
-
-def get_journal_file(username):
-    return os.path.join(JOURNAL_FOLDER, f'{username}_journal.json')
-
-def load_journal(username):
-    path = get_journal_file(username)
-    if os.path.exists(path):
-        with open(path, 'r') as f:
-            return json.load(f)
-    return []
-
-def save_journal(username, journal):
-    with open(get_journal_file(username), 'w') as f:
-        json.dump(journal, f, indent=2)
-
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.route('/')
-def index():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    journal = load_journal(session['username'])
-    filter_type = request.args.get('filter')
-    if filter_type == 'complete':
-        journal = [j for j in journal if j.get('result')]
-    elif filter_type == 'incomplete':
-        journal = [j for j in journal if not j.get('result')]
-    return render_template('index.html', journal=journal)
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        users = load_users()
-        username = request.form['username']
-        password = request.form['password']
-        if username in users and users[username] == password:
-            session['username'] = username
-            return redirect(url_for('index'))
-        return render_template('login.html', error='Invalid credentials.')
-    return render_template('login.html')
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        users = load_users()
-        username = request.form['username']
-        password = request.form['password']
-        if username in users:
-            return render_template('register.html', error='Username already exists.')
-        users[username] = password
-        save_users(users)
-        return redirect(url_for('login'))
-    return render_template('register.html')
-
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
-
-@app.route('/calculate', methods=['POST'])
-def calculate():
-    entry_price = float(request.form.get('entry_price', 0))
-    stop_loss = float(request.form.get('stop_loss', 0))
-    take_profit = float(request.form.get('take_profit', 0))
-    risk_amount = float(request.form.get('risk_amount', 0))
-
-    pip_difference = abs(entry_price - stop_loss)
-    pip_value = 10
-    lot_size = risk_amount / (pip_difference * pip_value) if pip_difference else 0
-    expected_profit = abs(take_profit - entry_price) * pip_value * lot_size
-
-    return {
-        'lot_size': round(lot_size, 2),
-        'expected_profit': round(expected_profit, 2)
-    }
-
-@app.route('/save', methods=['POST'])
-def save():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    data = dict(request.form)
-    data['date'] = datetime.now().strftime('%Y-%m-%d %H:%M')
-    data['lot_size'] = request.form.get('lot_size')
-    data['expected_profit'] = request.form.get('expected_profit')
-
-    pre_image = request.files.get('pre_image')
-    post_image = request.files.get('post_image')
-
-    if pre_image and allowed_file(pre_image.filename):
-        filename = secure_filename(pre_image.filename)
-        pre_path = os.path.join(UPLOAD_FOLDER, filename)
-        pre_image.save(pre_path)
-        data['pre_image'] = pre_path
-
-    if post_image and allowed_file(post_image.filename):
-        filename = secure_filename(post_image.filename)
-        post_path = os.path.join(UPLOAD_FOLDER, filename)
-        post_image.save(post_path)
-        data['post_image'] = post_path
-
-    journal = load_journal(session['username'])
-    journal.append(data)
-    save_journal(session['username'], journal)
-
-    return redirect(url_for('index'))
-
-@app.route('/edit/<int:index>', methods=['POST'])
-def edit(index):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    journal = load_journal(session['username'])
-    if index >= len(journal):
-        return redirect(url_for('index'))
-
-    journal[index]['result'] = request.form.get('result')
-    journal[index]['observation'] = request.form.get('observation')
-
-    post_image = request.files.get('post_image')
-    if post_image and allowed_file(post_image.filename):
-        filename = secure_filename(post_image.filename)
-        post_path = os.path.join(UPLOAD_FOLDER, filename)
-        post_image.save(post_path)
-        journal[index]['post_image'] = post_path
-
-    save_journal(session['username'], journal)
-    return redirect(url_for('index'))
-
-@app.route('/export_pdf')
-def export_pdf():
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    journal = load_journal(session['username'])
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=10)
-
-    for entry in journal:
-        for k, v in entry.items():
-            if 'image' not in k:
-                pdf.cell(200, 10, txt=f"{k}: {v}", ln=True)
-        pdf.ln(5)
-
-    filepath = os.path.join(UPLOAD_FOLDER, f"{session['username']}_journal.pdf")
-    pdf.output(filepath)
-    return send_file(filepath, as_attachment=True)
-
-if __name__ == '__main__':
-    app.run(debug=True)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex items-center justify-center min-h-screen bg-gray-100">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <h2 class="text-2xl font-bold mb-6 text-center">Register</h2>
+    {% if error %}<p class="text-red-500 text-sm mb-4">{{ error }}</p>{% endif %}
+    <form method="POST">
+      <div class="mb-4">
+        <label class="block mb-1 font-medium">Username</label>
+        <input type="text" name="username" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <div class="mb-6">
+        <label class="block mb-1 font-medium">Password</label>
+        <input type="password" name="password" class="w-full border px-3 py-2 rounded" required>
+      </div>
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">Register</button>
+    </form>
+    <p class="mt-4 text-center text-sm">
+      Already have an account?
+      <a href="/login" class="text-blue-600 hover:underline">Login here</a>
+    </p>
+  </div>
+</body>
+</html>
