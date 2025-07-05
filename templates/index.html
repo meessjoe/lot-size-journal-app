@@ -11,31 +11,31 @@
     <!-- LEFT COLUMN: INPUT FORM -->
     <div class="w-1/2 bg-white p-8 shadow-lg">
       <h2 class="text-2xl font-bold mb-6">Lot Size Calculator</h2>
-      <form method="POST" action="/save" enctype="multipart/form-data" class="space-y-4">
+      <form method="POST" enctype="multipart/form-data" class="space-y-4">
 
         <!-- Instrument -->
         <div>
           <label class="block font-medium">Instrument</label>
           <select name="instrument" class="w-full border px-3 py-2 rounded">
-            <option>Forex</option>
-            <option>Crypto</option>
-            <option>Commodities</option>
-            <option>Indices</option>
+            <option {% if form.instrument == 'Forex' %}selected{% endif %}>Forex</option>
+            <option {% if form.instrument == 'Crypto' %}selected{% endif %}>Crypto</option>
+            <option {% if form.instrument == 'Commodities' %}selected{% endif %}>Commodities</option>
+            <option {% if form.instrument == 'Indices' %}selected{% endif %}>Indices</option>
           </select>
         </div>
 
         <!-- Pair -->
         <div>
           <label class="block font-medium">Pair</label>
-          <input type="text" name="pair" value="{{ request.form.pair }}" class="w-full border px-3 py-2 rounded" />
+          <input type="text" name="pair" value="{{ form.pair or '' }}" class="w-full border px-3 py-2 rounded" />
         </div>
 
         <!-- Direction -->
         <div>
           <label class="block font-medium">Direction</label>
           <select name="direction" class="w-full border px-3 py-2 rounded">
-            <option>Buy</option>
-            <option>Sell</option>
+            <option {% if form.direction == 'Buy' %}selected{% endif %}>Buy</option>
+            <option {% if form.direction == 'Sell' %}selected{% endif %}>Sell</option>
           </select>
         </div>
 
@@ -43,43 +43,49 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block font-medium">Entry Price</label>
-            <input type="number" name="entry_price" value="{{ request.form.entry_price }}" class="w-full border px-3 py-2 rounded" step="any" />
+            <input type="number" name="entry_price" step="any" value="{{ form.entry_price or '' }}" class="w-full border px-3 py-2 rounded" />
           </div>
           <div>
             <label class="block font-medium">Stop Loss</label>
-            <input type="number" name="stop_loss" value="{{ request.form.stop_loss }}" class="w-full border px-3 py-2 rounded" step="any" />
+            <input type="number" name="stop_loss" step="any" value="{{ form.stop_loss or '' }}" class="w-full border px-3 py-2 rounded" />
           </div>
           <div>
             <label class="block font-medium">Take Profit</label>
-            <input type="number" name="take_profit" value="{{ request.form.take_profit }}" class="w-full border px-3 py-2 rounded" step="any" />
+            <input type="number" name="take_profit" step="any" value="{{ form.take_profit or '' }}" class="w-full border px-3 py-2 rounded" />
           </div>
           <div>
             <label class="block font-medium">Risk Amount ($)</label>
-            <input type="number" name="risk_amount" value="{{ request.form.risk_amount }}" class="w-full border px-3 py-2 rounded" step="any" />
+            <input type="number" name="risk_amount" step="any" value="{{ form.risk_amount or '' }}" class="w-full border px-3 py-2 rounded" />
           </div>
         </div>
 
-        <!-- Lot Size + Expected Profit -->
+        <!-- Lot Size & Expected Profit -->
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block font-medium">Lot Size</label>
-            <input type="text" name="lot_size" value="{{ request.form.lot_size }}" class="w-full border px-3 py-2 bg-gray-100 rounded" readonly />
+            <input type="text" name="lot_size" value="{{ form.lot_size or '' }}" readonly class="w-full border px-3 py-2 bg-gray-100 rounded" />
           </div>
           <div>
             <label class="block font-medium">Expected Profit</label>
-            <input type="text" name="expected_profit" value="{{ request.form.expected_profit }}" class="w-full border px-3 py-2 bg-gray-100 rounded" readonly />
+            <input type="text" name="expected_profit" value="{{ form.expected_profit or '' }}" readonly class="w-full border px-3 py-2 bg-gray-100 rounded" />
           </div>
         </div>
 
-        <!-- Pre-Trade Chart -->
+        <!-- Pre-Trade Chart Image -->
         <div>
           <label class="block font-medium">Pre-Trade Chart Image</label>
           <input type="file" name="pre_image" class="w-full" />
         </div>
 
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Save to Journal
-        </button>
+        <!-- Buttons -->
+        <div class="flex gap-4">
+          <button type="submit" formaction="/calculate" class="bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800">
+            Calculate
+          </button>
+          <button type="submit" formaction="/save" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            Save to Journal
+          </button>
+        </div>
       </form>
     </div>
 
