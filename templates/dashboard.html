@@ -1,7 +1,88 @@
-{% extends "layout.html" %}
+{% extends 'layout.html' %}
 {% block content %}
-<div class="text-center py-20">
-  <h1 class="text-3xl font-bold mb-4">Welcome to Your Lot Size Journal Dashboard</h1>
-  <p class="text-gray-600">Use the navigation above to start calculating trades or viewing your journal entries.</p>
+<div class="space-y-4">
+  <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-md space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium">Instrument</label>
+        <select name="instrument" class="w-full rounded border-gray-300">
+          <option value="Forex">Forex</option>
+          <option value="Crypto">Crypto</option>
+          <option value="Commodities">Commodities</option>
+          <option value="Indices">Indices</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Pair</label>
+        <input type="text" name="pair" value="{{ pair }}" class="w-full rounded border-gray-300" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Direction</label>
+        <select name="direction" class="w-full rounded border-gray-300">
+          <option value="Buy">Buy</option>
+          <option value="Sell">Sell</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Entry Price</label>
+        <input type="number" step="any" name="entry" value="{{ entry }}" class="w-full rounded border-gray-300" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Stop Loss</label>
+        <input type="number" step="any" name="sl" value="{{ sl }}" class="w-full rounded border-gray-300" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Take Profit</label>
+        <input type="number" step="any" name="tp" value="{{ tp }}" class="w-full rounded border-gray-300" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Risk Amount ($)</label>
+        <input type="number" step="any" name="risk" value="{{ risk }}" class="w-full rounded border-gray-300" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium">Pre-Trade Chart Image</label>
+        <input type="file" name="pre_image" class="w-full rounded border-gray-300" />
+      </div>
+    </div>
+    <div class="flex justify-between items-center mt-4">
+      <button type="submit" name="action" value="calculate" class="bg-blue-600 text-white px-4 py-2 rounded">Calculate</button>
+      <button type="submit" name="action" value="save" class="bg-green-600 text-white px-4 py-2 rounded">Save to Journal</button>
+    </div>
+    {% if lot_size is defined %}
+    <div class="mt-4">
+      <p><strong>Lot Size:</strong> {{ lot_size }}</p>
+      <p><strong>Expected Profit:</strong> {{ expected_profit }}</p>
+    </div>
+    {% endif %}
+  </form>
+</div>
+
+<div class="space-y-4">
+  <div class="flex items-center space-x-4">
+    <a href="/dashboard?filter=all" class="text-blue-600 font-semibold">All</a>
+    <a href="/dashboard?filter=complete" class="text-green-600 font-semibold">Complete</a>
+    <a href="/dashboard?filter=incomplete" class="text-yellow-600 font-semibold">Incomplete</a>
+  </div>
+
+  {% for entry in journal %}
+  <div class="bg-white p-4 rounded-lg shadow">
+    <p><strong>Date:</strong> {{ entry.date }}</p>
+    <p><strong>Instrument:</strong> {{ entry.instrument }}</p>
+    <p><strong>Pair:</strong> {{ entry.pair }}</p>
+    <p><strong>Direction:</strong> {{ entry.direction }}</p>
+    <p><strong>Entry:</strong> {{ entry.entry }}</p>
+    <p><strong>SL:</strong> {{ entry.sl }}</p>
+    <p><strong>TP:</strong> {{ entry.tp }}</p>
+    <p><strong>Risk:</strong> {{ entry.risk }}</p>
+    <p><strong>Lot:</strong> {{ entry.lot_size }}</p>
+    <p><strong>Profit:</strong> {{ entry.expected_profit }}</p>
+    {% if entry.result %}<p><strong>Result:</strong> {{ entry.result }}</p>{% endif %}
+    {% if entry.observation %}<p><strong>Observation:</strong> {{ entry.observation }}</p>{% endif %}
+    <div class="flex justify-end mt-2 space-x-2">
+      <a href="/edit/{{ entry.id }}" class="text-blue-500 hover:underline">Edit</a>
+      <a href="/delete/{{ entry.id }}" class="text-red-500 hover:underline">Delete</a>
+    </div>
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}
