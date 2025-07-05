@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Lot Size Journal</title>
+  <meta charset="UTF-8" />
+  <title>Lot Size Calculator & Journal</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100">
   <div class="flex min-h-screen">
-    <!-- LEFT COLUMN: INPUTS -->
-    <div class="w-1/2 p-8 bg-white shadow-lg">
-      <h2 class="text-2xl font-bold mb-6">Trade Calculator</h2>
+
+    <!-- LEFT COLUMN: INPUT FORM -->
+    <div class="w-1/2 bg-white p-8 shadow-lg">
+      <h2 class="text-2xl font-bold mb-6">Lot Size Calculator</h2>
       <form method="POST" action="/save" enctype="multipart/form-data" class="space-y-4">
+
         <!-- Instrument -->
         <div>
-          <label class="block mb-1 font-medium">Instrument</label>
-          <select name="instrument" class="w-full border rounded px-3 py-2">
+          <label class="block font-medium">Instrument</label>
+          <select name="instrument" class="w-full border px-3 py-2 rounded">
             <option>Forex</option>
             <option>Crypto</option>
             <option>Commodities</option>
@@ -24,58 +26,57 @@
 
         <!-- Pair -->
         <div>
-          <label class="block mb-1 font-medium">Pair</label>
-          <input type="text" name="pair" value="{{ request.form.pair }}" class="w-full border rounded px-3 py-2">
+          <label class="block font-medium">Pair</label>
+          <input type="text" name="pair" value="{{ request.form.pair }}" class="w-full border px-3 py-2 rounded" />
         </div>
 
         <!-- Direction -->
         <div>
-          <label class="block mb-1 font-medium">Direction</label>
-          <select name="direction" class="w-full border rounded px-3 py-2">
+          <label class="block font-medium">Direction</label>
+          <select name="direction" class="w-full border px-3 py-2 rounded">
             <option>Buy</option>
             <option>Sell</option>
           </select>
         </div>
 
-        <!-- Entry, SL, TP, Risk -->
+        <!-- Entry / SL / TP / Risk -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block mb-1 font-medium">Entry Price</label>
-            <input type="number" step="any" name="entry_price" value="{{ request.form.entry_price }}" class="w-full border rounded px-3 py-2">
+            <label class="block font-medium">Entry Price</label>
+            <input type="number" name="entry_price" value="{{ request.form.entry_price }}" class="w-full border px-3 py-2 rounded" step="any" />
           </div>
           <div>
-            <label class="block mb-1 font-medium">Stop Loss</label>
-            <input type="number" step="any" name="stop_loss" value="{{ request.form.stop_loss }}" class="w-full border rounded px-3 py-2">
+            <label class="block font-medium">Stop Loss</label>
+            <input type="number" name="stop_loss" value="{{ request.form.stop_loss }}" class="w-full border px-3 py-2 rounded" step="any" />
           </div>
           <div>
-            <label class="block mb-1 font-medium">Take Profit</label>
-            <input type="number" step="any" name="take_profit" value="{{ request.form.take_profit }}" class="w-full border rounded px-3 py-2">
+            <label class="block font-medium">Take Profit</label>
+            <input type="number" name="take_profit" value="{{ request.form.take_profit }}" class="w-full border px-3 py-2 rounded" step="any" />
           </div>
           <div>
-            <label class="block mb-1 font-medium">Risk Amount ($)</label>
-            <input type="number" step="any" name="risk_amount" value="{{ request.form.risk_amount }}" class="w-full border rounded px-3 py-2">
+            <label class="block font-medium">Risk Amount ($)</label>
+            <input type="number" name="risk_amount" value="{{ request.form.risk_amount }}" class="w-full border px-3 py-2 rounded" step="any" />
           </div>
         </div>
 
-        <!-- Lot Size & Expected Profit (output only) -->
+        <!-- Lot Size + Expected Profit -->
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block mb-1 font-medium">Lot Size</label>
-            <input type="text" name="lot_size" value="{{ request.form.lot_size }}" readonly class="w-full border rounded px-3 py-2 bg-gray-100">
+            <label class="block font-medium">Lot Size</label>
+            <input type="text" name="lot_size" value="{{ request.form.lot_size }}" class="w-full border px-3 py-2 bg-gray-100 rounded" readonly />
           </div>
           <div>
-            <label class="block mb-1 font-medium">Expected Profit</label>
-            <input type="text" name="expected_profit" value="{{ request.form.expected_profit }}" readonly class="w-full border rounded px-3 py-2 bg-gray-100">
+            <label class="block font-medium">Expected Profit</label>
+            <input type="text" name="expected_profit" value="{{ request.form.expected_profit }}" class="w-full border px-3 py-2 bg-gray-100 rounded" readonly />
           </div>
         </div>
 
-        <!-- Pre-trade image -->
+        <!-- Pre-Trade Chart -->
         <div>
-          <label class="block mb-1 font-medium">Pre-Trade Chart Image</label>
-          <input type="file" name="pre_image" class="w-full">
+          <label class="block font-medium">Pre-Trade Chart Image</label>
+          <input type="file" name="pre_image" class="w-full" />
         </div>
 
-        <!-- Save button -->
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
           Save to Journal
         </button>
@@ -84,23 +85,22 @@
 
     <!-- RIGHT COLUMN: JOURNAL -->
     <div class="w-1/2 p-8 overflow-y-scroll">
-      <h2 class="text-2xl font-bold mb-4">Your Journal</h2>
-
-      <!-- Filter Buttons -->
-      <div class="mb-4">
-        <a href="/?filter=incomplete" class="text-sm bg-yellow-200 hover:bg-yellow-300 px-3 py-1 rounded mr-2">Incomplete</a>
-        <a href="/?filter=complete" class="text-sm bg-green-200 hover:bg-green-300 px-3 py-1 rounded">Complete</a>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Trade Journal</h2>
+        <div>
+          <a href="/?filter=incomplete" class="px-3 py-1 bg-yellow-300 rounded mr-2 text-sm">Incomplete</a>
+          <a href="/?filter=complete" class="px-3 py-1 bg-green-300 rounded text-sm">Complete</a>
+        </div>
       </div>
 
-      {% for i, trade in enumerate(journal) %}
-        <div class="border border-gray-200 rounded p-4 mb-4 bg-white shadow-sm">
-          <div class="flex justify-between items-center">
-            <div class="text-sm font-medium text-gray-500">{{ trade.date }}</div>
-            {% if trade.result %}
-              <span class="text-green-600 font-semibold">Complete</span>
-            {% else %}
-              <span class="text-yellow-600 font-semibold">Incomplete</span>
-            {% endif %}
+      {% for trade in journal %}
+        {% set i = loop.index0 %}
+        <div class="mb-6 bg-white rounded shadow p-4">
+          <div class="flex justify-between text-sm text-gray-500">
+            <span>{{ trade.date }}</span>
+            <span class="font-semibold {% if trade.result %}text-green-600{% else %}text-yellow-600{% endif %}">
+              {% if trade.result %}Complete{% else %}Incomplete{% endif %}
+            </span>
           </div>
 
           <div class="mt-2 text-sm">
@@ -110,36 +110,42 @@
             <p><strong>Entry:</strong> {{ trade.entry_price }} | <strong>SL:</strong> {{ trade.stop_loss }} | <strong>TP:</strong> {{ trade.take_profit }}</p>
             <p><strong>Lot Size:</strong> {{ trade.lot_size }} | <strong>Expected Profit:</strong> ${{ trade.expected_profit }}</p>
             {% if trade.pre_image %}
-              <p class="mt-2"><strong>Pre-Trade Chart:</strong><br><img src="{{ trade.pre_image }}" class="mt-1 w-40 rounded shadow"></p>
+              <div class="mt-2">
+                <strong>Pre-Trade Image:</strong><br />
+                <img src="{{ trade.pre_image }}" class="w-40 rounded shadow mt-1" />
+              </div>
             {% endif %}
           </div>
 
           {% if not trade.result %}
-            <!-- Post-trade form to complete the journal -->
             <form method="POST" action="/edit/{{ i }}" enctype="multipart/form-data" class="mt-4 space-y-2">
               <div>
                 <label class="block font-medium">Result</label>
-                <select name="result" class="w-full border rounded px-3 py-2">
+                <select name="result" class="w-full border px-3 py-2 rounded">
                   <option>Win</option>
                   <option>Lose</option>
                 </select>
               </div>
               <div>
                 <label class="block font-medium">Observation</label>
-                <textarea name="observation" class="w-full border rounded px-3 py-2" rows="2"></textarea>
+                <textarea name="observation" class="w-full border px-3 py-2 rounded" rows="2"></textarea>
               </div>
               <div>
-                <label class="block font-medium">Post-Trade Chart Image</label>
-                <input type="file" name="post_image" class="w-full">
+                <label class="block font-medium">Post-Trade Image</label>
+                <input type="file" name="post_image" class="w-full" />
               </div>
-              <button type="submit" class="bg-green-600 text-white px-3 py-2 rounded hover:bg-green-700">Complete Trade</button>
+              <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                Complete Trade
+              </button>
             </form>
           {% else %}
-            <!-- Completed trade summary -->
-            {% if trade.result %}<p><strong>Result:</strong> {{ trade.result }}</p>{% endif %}
+            {% if trade.result %}<p class="mt-2"><strong>Result:</strong> {{ trade.result }}</p>{% endif %}
             {% if trade.observation %}<p><strong>Observation:</strong> {{ trade.observation }}</p>{% endif %}
             {% if trade.post_image %}
-              <p class="mt-2"><strong>Post-Trade Chart:</strong><br><img src="{{ trade.post_image }}" class="mt-1 w-40 rounded shadow"></p>
+              <div class="mt-2">
+                <strong>Post-Trade Image:</strong><br />
+                <img src="{{ trade.post_image }}" class="w-40 rounded shadow mt-1" />
+              </div>
             {% endif %}
           {% endif %}
         </div>
