@@ -27,7 +27,11 @@ def calculate_lot_size(entry_price, sl_price, tp_price, risk_amount):
     expected_profit = abs(tp_price - entry_price) * pip_value * lot_size
     return round(lot_size, 2), round(expected_profit, 2)
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
+def index():
+    return redirect(url_for('dashboard'))
+
+@app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     journal = load_journal()
     filter_val = request.args.get('filter', 'all')
@@ -141,4 +145,3 @@ def export_pdf():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
-

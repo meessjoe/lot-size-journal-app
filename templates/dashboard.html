@@ -1,11 +1,14 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="space-y-4">
-  <form method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded-lg shadow-md space-y-4">
+<!-- Left: Lot Size Calculator -->
+<div class="bg-white rounded-lg shadow p-6 space-y-4">
+  <h2 class="text-xl font-semibold">Welcome, Jonas!</h2>
+  <h3 class="text-lg font-medium">Lot Size Calculator</h3>
+  <form method="POST" enctype="multipart/form-data" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm font-medium">Instrument</label>
-        <select name="instrument" class="w-full rounded border-gray-300">
+        <label class="text-sm">Instrument</label>
+        <select name="instrument" class="w-full border rounded px-2 py-1">
           <option value="Forex">Forex</option>
           <option value="Crypto">Crypto</option>
           <option value="Commodities">Commodities</option>
@@ -13,74 +16,85 @@
         </select>
       </div>
       <div>
-        <label class="block text-sm font-medium">Pair</label>
-        <input type="text" name="pair" value="{{ pair }}" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Pair</label>
+        <input type="text" name="pair" value="{{ pair }}" class="w-full border rounded px-2 py-1">
       </div>
       <div>
-        <label class="block text-sm font-medium">Direction</label>
-        <select name="direction" class="w-full rounded border-gray-300">
+        <label class="text-sm">Direction</label>
+        <select name="direction" class="w-full border rounded px-2 py-1">
           <option value="Buy">Buy</option>
           <option value="Sell">Sell</option>
         </select>
       </div>
       <div>
-        <label class="block text-sm font-medium">Entry Price</label>
-        <input type="number" step="any" name="entry" value="{{ entry }}" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Take Profit</label>
+        <input type="number" step="any" name="tp" value="{{ tp }}" class="w-full border rounded px-2 py-1">
       </div>
       <div>
-        <label class="block text-sm font-medium">Stop Loss</label>
-        <input type="number" step="any" name="sl" value="{{ sl }}" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Entry Price</label>
+        <input type="number" step="any" name="entry" value="{{ entry }}" class="w-full border rounded px-2 py-1">
       </div>
       <div>
-        <label class="block text-sm font-medium">Take Profit</label>
-        <input type="number" step="any" name="tp" value="{{ tp }}" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Stop Loss</label>
+        <input type="number" step="any" name="sl" value="{{ sl }}" class="w-full border rounded px-2 py-1">
       </div>
       <div>
-        <label class="block text-sm font-medium">Risk Amount ($)</label>
-        <input type="number" step="any" name="risk" value="{{ risk }}" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Risk Amount</label>
+        <input type="number" step="any" name="risk" value="{{ risk }}" class="w-full border rounded px-2 py-1">
       </div>
       <div>
-        <label class="block text-sm font-medium">Pre-Trade Chart Image</label>
-        <input type="file" name="pre_image" class="w-full rounded border-gray-300" />
+        <label class="text-sm">Expected Profit</label>
+        <input type="text" readonly value="{{ expected_profit }}" class="w-full border bg-gray-100 rounded px-2 py-1">
       </div>
     </div>
-    <div class="flex justify-between items-center mt-4">
-      <button type="submit" name="action" value="calculate" class="bg-blue-600 text-white px-4 py-2 rounded">Calculate</button>
-      <button type="submit" name="action" value="save" class="bg-green-600 text-white px-4 py-2 rounded">Save to Journal</button>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm">Lot Size</label>
+        <input type="text" readonly value="{{ lot_size }}" class="w-full border bg-gray-100 rounded px-2 py-1">
+      </div>
+      <div>
+        <label class="text-sm">Pre-Trade Chart Image</label>
+        <input type="file" name="pre_image" class="w-full">
+      </div>
     </div>
-    {% if lot_size is defined %}
-    <div class="mt-4">
-      <p><strong>Lot Size:</strong> {{ lot_size }}</p>
-      <p><strong>Expected Profit:</strong> {{ expected_profit }}</p>
+    <div>
+      <label class="text-sm">Decision Making</label>
+      <textarea name="decision" class="w-full border rounded px-2 py-1"></textarea>
     </div>
-    {% endif %}
+    <div class="flex justify-between">
+      <button type="submit" name="action" value="calculate" class="bg-gray-200 px-4 py-2 rounded">Calculate</button>
+      <button type="submit" name="action" value="save" class="bg-blue-600 text-white px-4 py-2 rounded">Save to Journal</button>
+    </div>
   </form>
 </div>
 
+<!-- Right: Journal Entries -->
 <div class="space-y-4">
-  <div class="flex items-center space-x-4">
-    <a href="/dashboard?filter=all" class="text-blue-600 font-semibold">All</a>
-    <a href="/dashboard?filter=complete" class="text-green-600 font-semibold">Complete</a>
-    <a href="/dashboard?filter=incomplete" class="text-yellow-600 font-semibold">Incomplete</a>
+  <h2 class="text-xl font-semibold">Journal Entries</h2>
+  <div class="flex space-x-4 text-sm">
+    <a href="/dashboard?filter=all" class="text-blue-600 hover:underline">All</a>
+    <a href="/dashboard?filter=incomplete" class="text-yellow-600 hover:underline">Incomplete</a>
+    <a href="/dashboard?filter=complete" class="text-green-600 hover:underline">Complete</a>
   </div>
 
   {% for entry in journal %}
-  <div class="bg-white p-4 rounded-lg shadow">
-    <p><strong>Date:</strong> {{ entry.date }}</p>
-    <p><strong>Instrument:</strong> {{ entry.instrument }}</p>
-    <p><strong>Pair:</strong> {{ entry.pair }}</p>
-    <p><strong>Direction:</strong> {{ entry.direction }}</p>
-    <p><strong>Entry:</strong> {{ entry.entry }}</p>
-    <p><strong>SL:</strong> {{ entry.sl }}</p>
-    <p><strong>TP:</strong> {{ entry.tp }}</p>
-    <p><strong>Risk:</strong> {{ entry.risk }}</p>
-    <p><strong>Lot:</strong> {{ entry.lot_size }}</p>
-    <p><strong>Profit:</strong> {{ entry.expected_profit }}</p>
-    {% if entry.result %}<p><strong>Result:</strong> {{ entry.result }}</p>{% endif %}
-    {% if entry.observation %}<p><strong>Observation:</strong> {{ entry.observation }}</p>{% endif %}
-    <div class="flex justify-end mt-2 space-x-2">
-      <a href="/edit/{{ entry.id }}" class="text-blue-500 hover:underline">Edit</a>
-      <a href="/delete/{{ entry.id }}" class="text-red-500 hover:underline">Delete</a>
+  <div class="bg-white rounded-lg shadow p-4 space-y-2">
+    <div class="flex justify-between items-start">
+      <div>
+        <p class="font-semibold">{{ entry.pair }} | {{ entry.date }}</p>
+        <p><strong>Instrument:</strong> {{ entry.instrument }} | <strong>Direction:</strong> {{ entry.direction }}</p>
+        <p><strong>Entry:</strong> {{ entry.entry }} | <strong>Stop Loss:</strong> {{ entry.sl }} | <strong>Take Profit:</strong> {{ entry.tp }}</p>
+        <p><strong>Risk:</strong> {{ entry.risk }} | <strong>Lot:</strong> {{ entry.lot_size }} | <strong>Profit:</strong> {{ entry.expected_profit }}</p>
+        {% if entry.result %}<p><strong>Result:</strong> {{ entry.result }}</p>{% endif %}
+        {% if entry.observation %}<p><strong>Observation:</strong> {{ entry.observation }}</p>{% endif %}
+      </div>
+      {% if entry.pre_image %}
+      <img src="{{ url_for('static', filename='uploads/' + entry.pre_image) }}" class="w-24 h-16 object-cover rounded border">
+      {% endif %}
+    </div>
+    <div class="flex justify-end space-x-4">
+      <a href="/edit/{{ entry.id }}" class="text-blue-600 hover:underline">Edit</a>
+      <a href="/delete/{{ entry.id }}" class="text-red-600 hover:underline">Delete</a>
     </div>
   </div>
   {% endfor %}
